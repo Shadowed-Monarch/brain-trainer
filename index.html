@@ -1,103 +1,247 @@
-<!DOCTYPE html> <html lang="en"> <head> <meta charset="UTF-8"> <meta name="viewport"
-content="width=device-width, initial-scale=1.0"> <title>Brain Trainer</title> <style> :root{ --bg:#000; --
-accent:#e74c3c; --panel:#1a1a1a; --text:#fff; --gold:#f1c40f; } *{box-sizing:border-box;} body{margin:0;fontfamily:Segoe UI,Arial,sans-serif;background:var(--bg);color:var(--text);display:flex;flex-direction:column;minheight:100vh;} header{background:#200;border-bottom:4px solid var(--accent);text-align:center;padding:
-10px;} button{background:#000;border:2px solid var(--accent);color:#fff;padding:8px 14px;margin:
-3px;border-radius:6px;font-weight:bold;cursor:pointer;} button:hover{background:var(--accent)}
-hud{display:flex;justify-content:spacearound;color:var(--accent);padding:6px;font-size:
-1.1rem;flex-wrap:wrap;}
-game{flex:1;margin:8px;border:3px solid var(--
-accent);border-radius:12px;background:var(--
-panel);position:relative;overflow:hidden;}
-.overlay{position:absolute;inset:0;background:rgba(0,0,0,.95);display:flex;flex-direction:column;justifycontent:center;align-items:center;z-index:99;} .hidden{display:none} input{padding:12px;font-size:
-1.2rem;border-radius:10px;border:2px solid var(--accent);background:#111;color:var(--accent);textalign:center;width:80%;max-width:400px;} .bubble{position:absolute;background:var(--
-accent);color:#fff;padding:10px 18px;border-radius:25px;font-weight:bold;white-space:nowrap;} .dot{width:
-60px;height:60px;border-radius:50%;background:var(--accent);color:#fff;display:flex;alignitems:center;justify-content:center;font-size:1.5rem;font-weight:bold;border:3px solid
-#fff;position:absolute;cursor:pointer;}
-1
-statsBox{position:absolute;bottom:10px;left:
-50%;transform:translateX(-50%);background:#111;padding:8px 12px;border-radius:10px;border:2px solid var(--
-accent);font-size:0.9rem;display:flex;gap:10px;}
-leaderboardBox{position:absolute;top:10px;right:
-10px;background:#111;padding:10px;borderradius:10px;border:2px solid var(--accent);maxwidth:200px;max-height:400px;overflow:auto;}
-@media(max-width:600px){.bubble{font-size:1rem;padding:6px 12px;}.dot{width:50px;height:50px;fontsize:1.2rem;}input{width:90%;font-size:1rem;padding:10px;}#hud{font-size:1rem;}} </style> <!-- Firebase
-SDKs --> <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script> <script
-src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script> </head> <body>
-<header> <h2> Brain Speed Trainer Pro</h2> <div> <button onclick="game.switchGame('math')">MATH</
-button> <button onclick="game.switchGame('grammar')">GRAMMAR</button> <button
-onclick="game.switchGame('dots')">DOTS</button> </div> </header> <div id="hud"> <span>LEVEL: <span
-id="lvl">1</span></span> <span id="timer" class="hidden">TIME: <span id="time">30</span></span> </
-div> <div id="game"> <div id="nameBox" class="overlay"> <h3 style="color:var(--gold)">ENTER NAME</h3>
-<input id="nameInput" maxlength="12"> <button onclick="game.setName()">START</button> </div> <div
-id="overlay" class="overlay hidden"> <h2 id="msg">READY?</h2> <button onclick="game.start()">START</
-button> </div> <div id="statsBox" class="hidden"> <span>Avg RT: <span id="statRT">0</span>ms</span>
-<span>Accuracy: <span id="statAcc">0</span>%</span> <span>Streak: <span id="statStreak">0</span></
-span> </div> <div id="leaderboardBox"> <h4 style="margin:0 0 5px 0;"> Top 30</h4> <ul id="leaderList"
-style="padding-left:16px;margin:0;"></ul> </div> </div> <div style="text-align:center;padding:8px"
-id="inputBox"> <input id="answer" placeholder="Type answer"> </div> <script> // Firebase config (replace
-with your own config after creating Firebase project) const firebaseConfig = { apiKey: "YOUR_API_KEY",
-authDomain: "YOUR_PROJECT_ID.firebaseapp.com", databaseURL: "https://YOUR_PROJECT_ID-defaultrtdb.firebaseio.com", projectId: "YOUR_PROJECT_ID", storageBucket: "YOUR_PROJECT_ID.appspot.com",
-messagingSenderId: "SENDER_ID", appId: "APP_ID" }; firebase.initializeApp(firebaseConfig); const
-db=firebase.database();
-const sndCorrect=new Audio("data:audio/
-wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YQgAAAAA"); const
-sndWrong=new Audio("data:audio/
-wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YQgAAAAA"); const
-sndLevel=new Audio("data:audio/
-wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YQgAAAAA");
-2
-class Game{ constructor(){ this.name=localStorage.getItem("bt_name")||""; this.level=1; this.mode=null;
-this.active=[]; this.lastIdx=-1; this.game=document.getElementById("game"); this.stats={totalAnswered:
-0,correct:0,totalTime:0,streak:0}; this.grammar=[ {q:"Happy (opp.)",a:"sad"},{q:"Fast (opp.)",a:"slow"},{q:"Big
-(opp.)",a:"small"}, {q:"Hot (opp.)",a:"cold"},{q:"Color: Sky",a:"blue"},{q:"Color: Grass",a:"green"}, {q:"Go
-(past)",a:"went"},{q:"Eat (past)",a:"ate"},{q:"Run (past)",a:"ran"}, {q:"Read (past)",a:"read"},{q:"I ___ to school
-yesterday",a:"went"},{q:"She ___ an apple",a:"ate"}, {q:"They ___ the match",a:"won"} ]; this.grammar=[...new
-Map(this.grammar.map(o=>[o.q,o])).values()];
-if(this.name)document.getElementById("nameBox").classList.add("hidden"); }
-setName(){ const v=nameInput.value.trim(); if(v.length>1){ this.name=v; localStorage.setItem("bt_name",v);
-nameBox.classList.add("hidden"); } }
-switchGame(m){ this.mode=m; overlay.classList.remove("hidden"); msg.innerText=m.toUpperCase()+" - LVL
-"+this.level; inputBox.style.display=m==="dots"?"none":"block"; timer.classList.toggle("hidden",m!=="dots"); }
-start(){ overlay.classList.add("hidden"); this.clear(); this.active=[]; this.count=0; lvl.innerText=this.level;
-document.getElementById('statsBox').classList.remove('hidden'); if(this.mode==="dots")this.startDots(); else
-this.loop=setInterval(()=>this.spawn(),Math.max(700,2500-this.level*200)); }
-clear(){ clearInterval(this.loop); clearInterval(this.clock);
-this.game.querySelectorAll(".bubble,.dot").forEach(e=>e.remove()); }
-spawn(){ if(this.count>=10)return this.win(); let q,a; if(this.mode==="grammar"){ let
-pool=this.grammar.filter(o=>{ if(this.level<4)return !o.q.includes("___"); if(this.level<7)return !
-o.q.includes("Color"); return true; }); let i; do{i=Math.floor(Math.random()pool.length)}while(i===this.lastIdx);
-this.lastIdx=i;q=pool[i].q;a=pool[i].a; }else{ let x=r(10+this.level),y=r(10);q= ${x}+${y} ;a=(x+y)+""; }
-this.lastSpawnTime=performance.now(); const
-b=document.createElement("div");b.className="bubble";b.innerText=q;
-b.style.top=Math.random()250+"px";this.game.appendChild(b);
-this.active.push({el:b,x:-200,a,time:this.lastSpawnTime}); this.count++; }
-update(){ this.active.forEach(o=>{ o.x+=1+this.level*0.15; o.el.style.left=o.x+"px";
-if(o.x>this.game.clientWidth)this.lose(); }); }
-check(v){ const i=this.active.findIndex(o=>o.a.toLowerCase()===v.toLowerCase().trim()); if(i>-1){ let
-now=performance.now(); sndCorrect.play(); this.active[i].el.remove(); this.stats.totalAnswered++;
-this.stats.correct++; this.stats.totalTime += (now - this.active[i].time); this.stats.streak++; this.active.splice(i,
-1); answer.value=""; this.updateStats(); } }
-updateStats(){ statRT.innerText=this.stats.correct>0?(this.stats.totalTime/this.stats.correct).toFixed(0):0;
-statAcc.innerText=this.stats.totalAnswered>0?((this.stats.correct/this.stats.totalAnswered)*100).toFixed(1):0;
-statStreak.innerText=this.stats.streak; }
-startDots(){ let cur=1; let total=5+Math.floor(this.level/2); this.time=30; time.innerText=this.time;
-this.clock=setInterval(()=>{this.time--;time.innerText=this.time;if(this.time<=0)this.lose();},1000); for(let
-i=1;i<=total;i++){ let d=document.createElement("div");d.className="dot";d.innerText=i;
-3
-d.style.left=Math.random()(this.game.clientWidth-80)+"px"; d.style.top=Math.random()
-(this.game.clientHeight-80)+"px"; d.onclick=()=>{if(i===cur){d.remove();cur++;this.stats.correct+
-+;this.stats.totalAnswered++;this.updateStats();if(cur>total)this.win();}
-else{this.stats.streak=0;this.updateStats();this.lose();}}; this.game.appendChild(d); } }
-win(){ sndLevel.play(); this.clear(); this.level++; overlay.classList.remove("hidden"); msg.innerText="LEVEL
-UP!"; this.submitScore(); }
-lose(){ sndWrong.play(); this.clear(); overlay.classList.remove("hidden"); msg.innerText="GAME OVER";
-this.stats.streak=0; this.updateStats(); this.submitScore(); }
-submitScore(){ if(!this.name)return;
-db.ref('leaderboard').push({name:this.name,score:this.level,timestamp:Date.now()});
-this.updateLeaderboard(); }
-updateLeaderboard(){ db.ref('leaderboard').orderByChild('score').limitToLast(30).on('value',snapshot=>{ let
-data=[]; snapshot.forEach(s=>data.push(s.val())); data.sort((a,b)=>b.score-a.score); leaderList.innerHTML='';
-data.forEach(e=>{ let li=document.createElement('li');li.innerText= ${e.name}: $
-{e.score} ;leaderList.appendChild(li); }); }); } } function r(n){return Math.floor(Math.random()*n)+1} const
-game=new Game(); setInterval(()=>game.update(),16);
-answer.addEventListener("input",e=>game.check(e.target.value)); </script> </body> </html>
-4
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Brain Trainer Pro</title>
+<style>
+:root {
+    --bg:#000;
+    --accent:#e74c3c;
+    --panel:#1a1a1a;
+    --text:#fff;
+    --gold:#f1c40f;
+}
+* { box-sizing: border-box; }
+body { margin:0; font-family:Segoe UI,Arial,sans-serif; background:var(--bg); color:var(--text); display:flex; flex-direction:column; min-height:100vh;}
+header { background:#200; border-bottom:4px solid var(--accent); text-align:center; padding:10px; }
+button { background:#000; border:2px solid var(--accent); color:#fff; padding:8px 14px; margin:3px; border-radius:6px; font-weight:bold; cursor:pointer;}
+button:hover { background:var(--accent); }
+#hud { display:flex; justify-content:space-around; color:var(--accent); padding:6px; font-size:1.1rem; flex-wrap:wrap; }
+#game { flex:1; margin:8px; border:3px solid var(--accent); border-radius:12px; background:var(--panel); position:relative; overflow:hidden; }
+.overlay { position:absolute; inset:0; background:rgba(0,0,0,.95); display:flex; flex-direction:column; justify-content:center; align-items:center; z-index:99; }
+.hidden { display:none; }
+input { padding:12px; font-size:1.2rem; border-radius:10px; border:2px solid var(--accent); background:#111; color:var(--accent); text-align:center; width:80%; max-width:400px; }
+.bubble { position:absolute; background:var(--accent); color:#fff; padding:10px 18px; border-radius:25px; font-weight:bold; white-space:nowrap; }
+.dot { width:60px; height:60px; border-radius:50%; background:var(--accent); color:#fff; display:flex; align-items:center; justify-content:center; font-size:1.5rem; font-weight:bold; border:3px solid #fff; position:absolute; cursor:pointer; }
+#statsBox { position:absolute; bottom:10px; left:50%; transform:translateX(-50%); background:#111; padding:8px 12px; border-radius:10px; border:2px solid var(--accent); font-size:0.9rem; display:flex; gap:10px; }
+#leaderboardBox { position:absolute; top:10px; right:10px; background:#111; padding:10px; border-radius:10px; border:2px solid var(--accent); max-width:200px; max-height:400px; overflow:auto; }
+@media(max-width:600px){ .bubble{font-size:1rem;padding:6px 12px;} .dot{width:50px;height:50px;font-size:1.2rem;} input{width:90%;font-size:1rem;padding:10px;} #hud{font-size:1rem;} }
+</style>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+</head>
+<body>
+
+<header>
+<h2>Brain Speed Trainer Pro</h2>
+<div>
+<button onclick="game.switchGame('math')">MATH</button>
+<button onclick="game.switchGame('grammar')">GRAMMAR</button>
+<button onclick="game.switchGame('dots')">DOTS</button>
+</div>
+</header>
+
+<div id="hud">
+<span>LEVEL: <span id="lvl">1</span></span>
+<span id="timer" class="hidden">TIME: <span id="time">30</span></span>
+</div>
+
+<div id="game">
+<div id="nameBox" class="overlay">
+<h3 style="color:var(--gold)">ENTER NAME</h3>
+<input id="nameInput" maxlength="12">
+<button onclick="game.setName()">START</button>
+</div>
+
+<div id="overlay" class="overlay hidden">
+<h2 id="msg">READY?</h2>
+<button onclick="game.start()">START</button>
+</div>
+
+<div id="statsBox" class="hidden">
+<span>Avg RT: <span id="statRT">0</span>ms</span>
+<span>Accuracy: <span id="statAcc">0</span>%</span>
+<span>Streak: <span id="statStreak">0</span></span>
+</div>
+
+<div id="leaderboardBox">
+<h4 style="margin:0 0 5px 0;">Top 30</h4>
+<ul id="leaderList" style="padding-left:16px;margin:0;"></ul>
+</div>
+</div>
+
+<div style="text-align:center;padding:8px" id="inputBox">
+<input id="answer" placeholder="Type answer">
+</div>
+
+<script>
+// Firebase config (replace with your own)
+const firebaseConfig = {
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+  databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com",
+  projectId: "YOUR_PROJECT_ID",
+  storageBucket: "YOUR_PROJECT_ID.appspot.com",
+  messagingSenderId: "SENDER_ID",
+  appId: "APP_ID"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+const sndCorrect = new Audio("data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YQgAAAAA");
+const sndWrong = new Audio("data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YQgAAAAA");
+const sndLevel = new Audio("data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YQgAAAAA");
+
+class Game {
+  constructor() {
+    this.name = localStorage.getItem("bt_name") || "";
+    this.level = 1;
+    this.mode = null;
+    this.active = [];
+    this.lastIdx = -1;
+    this.gameEl = document.getElementById("game");
+    this.stats = {totalAnswered:0,correct:0,totalTime:0,streak:0};
+    this.grammar = [
+      {q:"Happy (opp.)",a:"sad"},{q:"Fast (opp.)",a:"slow"},{q:"Big (opp.)",a:"small"},
+      {q:"Hot (opp.)",a:"cold"},{q:"Color: Sky",a:"blue"},{q:"Color: Grass",a:"green"},
+      {q:"Go (past)",a:"went"},{q:"Eat (past)",a:"ate"},{q:"Run (past)",a:"ran"},
+      {q:"Read (past)",a:"read"},{q:"I ___ to school yesterday",a:"went"},{q:"She ___ an apple",a:"ate"},
+      {q:"They ___ the match",a:"won"}
+    ];
+    this.grammar = [...new Map(this.grammar.map(o=>[o.q,o])).values()];
+
+    if(this.name) document.getElementById("nameBox").classList.add("hidden");
+  }
+
+  setName() {
+    const v = nameInput.value.trim();
+    if(v.length>1){ 
+      this.name = v; 
+      localStorage.setItem("bt_name",v);
+      nameBox.classList.add("hidden");
+      this.updateLeaderboard();
+    }
+  }
+
+  switchGame(mode){
+    this.mode = mode;
+    overlay.classList.remove("hidden");
+    msg.innerText = `${mode.toUpperCase()} - LVL ${this.level}`;
+    inputBox.style.display = mode==="dots"?"none":"block";
+    timer.classList.toggle("hidden", mode!=="dots");
+  }
+
+  start(){
+    overlay.classList.add("hidden");
+    this.clear();
+    this.active=[];
+    this.count=0;
+    lvl.innerText=this.level;
+    document.getElementById('statsBox').classList.remove('hidden');
+    if(this.mode==="dots") this.startDots();
+    else this.loop=setInterval(()=>this.spawn(), Math.max(700,2500-this.level*200));
+  }
+
+  clear(){
+    clearInterval(this.loop);
+    clearInterval(this.clock);
+    this.gameEl.querySelectorAll(".bubble,.dot").forEach(e=>e.remove());
+  }
+
+  spawn(){
+    if(this.count>=10) return this.win();
+    let q,a;
+    if(this.mode==="grammar"){
+      let pool = this.grammar;
+      let i; do { i=Math.floor(Math.random()*pool.length); } while(i===this.lastIdx);
+      this.lastIdx=i; q=pool[i].q; a=pool[i].a;
+    } else { 
+      let x = r(10+this.level), y=r(10);
+      q = `${x}+${y}`; a = `${x+y}`;
+    }
+    const now = performance.now();
+    const b = document.createElement("div");
+    b.className="bubble"; b.innerText=q;
+    b.style.top = Math.random()*(this.gameEl.clientHeight-40) + "px";
+    this.gameEl.appendChild(b);
+    this.active.push({el:b, x:-200, a:a, time:now});
+    this.count++;
+  }
+
+  update(){
+    this.active.forEach(o=>{
+      o.x+=1+this.level*0.15; o.el.style.left=o.x+"px";
+      if(o.x>this.gameEl.clientWidth) this.lose();
+    });
+  }
+
+  check(v){
+    const i=this.active.findIndex(o=>o.a.toLowerCase()===v.toLowerCase().trim());
+    if(i>-1){
+      let now=performance.now();
+      sndCorrect.play();
+      this.active[i].el.remove();
+      this.stats.totalAnswered++; this.stats.correct++;
+      this.stats.totalTime += (now-this.active[i].time); this.stats.streak++;
+      this.active.splice(i,1); answer.value="";
+      this.updateStats();
+      if(this.count>=10 && this.active.length===0) this.win();
+    }
+  }
+
+  updateStats(){
+    statRT.innerText = this.stats.correct>0 ? (this.stats.totalTime/this.stats.correct).toFixed(0) : 0;
+    statAcc.innerText = this.stats.totalAnswered>0 ? ((this.stats.correct/this.stats.totalAnswered)*100).toFixed(1) : 0;
+    statStreak.innerText = this.stats.streak;
+  }
+
+  startDots(){
+    let cur=1, total=5+Math.floor(this.level/2);
+    this.time=30; time.innerText=this.time;
+    this.clock=setInterval(()=>{ this.time--; time.innerText=this.time; if(this.time<=0) this.lose(); },1000);
+    for(let i=1;i<=total;i++){
+      let d=document.createElement("div");
+      d.className="dot"; d.innerText=i;
+      d.style.left=Math.random()*(this.gameEl.clientWidth-60)+"px";
+      d.style.top=Math.random()*(this.gameEl.clientHeight-60)+"px";
+      d.onclick=()=>{
+        if(i===cur){ d.remove(); cur++; this.stats.correct++; this.stats.totalAnswered++; this.updateStats(); if(cur>total) this.win(); }
+        else { this.stats.streak=0; this.updateStats(); this.lose(); }
+      }
+      this.gameEl.appendChild(d);
+    }
+  }
+
+  win(){ sndLevel.play(); this.clear(); this.level++; overlay.classList.remove("hidden"); msg.innerText="LEVEL UP!"; this.submitScore(); }
+  lose(){ sndWrong.play(); this.clear(); overlay.classList.remove("hidden"); msg.innerText="GAME OVER"; this.stats.streak=0; this.updateStats(); this.submitScore(); }
+
+  submitScore(){
+    if(!this.name) return;
+    db.ref('leaderboard').push({name:this.name,score:this.level,timestamp:Date.now()});
+    this.updateLeaderboard();
+  }
+
+  updateLeaderboard(){
+    db.ref('leaderboard').orderByChild('score').limitToLast(30).on('value', snapshot=>{
+      let data=[]; snapshot.forEach(s=>data.push(s.val()));
+      data.sort((a,b)=>b.score-a.score);
+      leaderList.innerHTML='';
+      data.forEach(e=>{
+        let li=document.createElement('li'); li.innerText=`${e.name}: ${e.score}`; leaderList.appendChild(li);
+      });
+    });
+  }
+}
+
+function r(n){return Math.floor(Math.random()*n)+1;}
+
+const game = new Game();
+setInterval(()=>game.update(),16);
+answer.addEventListener("input", e=>game.check(e.target.value));
+</script>
+
+</body>
+</html>
