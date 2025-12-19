@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BrainSpeed - Pro Edition</title>
+    <title>BrainSpeed - Pro Edition Fixed</title>
     <style>
         :root {
             --primary: #000000;
@@ -69,7 +69,6 @@
             overflow: hidden;
         }
 
-        /* SCREEN SHAKE ANIMATION */
         .shake { animation: shake 0.2s infinite; }
         @keyframes shake {
             0% { transform: translate(1px, 1px); }
@@ -79,14 +78,15 @@
 
         .question-bubble {
             position: absolute;
-            left: -180px;
+            left: -200px;
             background: var(--accent);
             color: white;
             padding: 12px 25px;
             border-radius: 30px;
-            font-size: 1.5rem;
+            font-size: 1.3rem;
             font-weight: bold;
-            box-shadow: 0 0 10px var(--accent);
+            box-shadow: 0 0 15px var(--accent);
+            white-space: nowrap;
         }
 
         #input-area { margin-top: 20px; display: none; }
@@ -101,10 +101,9 @@
             border: 3px solid var(--accent);
             border-radius: 12px;
             outline: none;
-            transition: box-shadow 0.3s;
+            transition: 0.3s;
         }
 
-        /* COMBO FIRE EFFECT */
         .combo-glow {
             box-shadow: 0 0 30px var(--accent), inset 0 0 15px var(--accent) !important;
             border-color: white !important;
@@ -137,7 +136,6 @@
             cursor: pointer;
             border: 2px solid white;
             font-size: 1.4rem;
-            user-select: none;
         }
 
         .timer-warning { color: #ff0000; animation: blink 0.4s infinite; }
@@ -163,7 +161,7 @@
 <div id="game-container">
     <div id="overlay">
         <h2 id="overlay-title">READY?</h2>
-        <p id="overlay-msg">Choose your training module.</p>
+        <p id="overlay-msg">Select a training module.</p>
         <button id="start-btn" class="hidden" onclick="gameManager.startGame()">START</button>
         <button id="reset-btn" class="hidden" style="color: grey; font-size: 0.7rem; margin-top: 20px;" onclick="gameManager.resetCurrentGameProgress()">Reset Progress</button>
     </div>
@@ -194,40 +192,46 @@ class GameManager {
         this.overlay = document.getElementById('overlay');
         this.startBtn = document.getElementById('start-btn');
         
-        this.quotes = ["Focus!", "Go again!", "Stay sharp!", "You've got this!", "Push forward!"];
+        this.quotes = ["Keep your focus!", "Don't blink!", "Try again!", "Speed is everything!", "Push your limits!"];
+        
+        // Expanded Grammar Bank
+        this.grammarBank = [
+            {q:"Happy (opp.)", a:"sad"}, {q:"Go (past)", a:"went"}, {q:"Color of grass", a:"green"},
+            {q:"Ice (opp.)", a:"fire"}, {q:"Eat (past)", a:"ate"}, {q:"Opposite: In", a:"out"},
+            {q:"Large (opp.)", a:"small"}, {q:"Sun color", a:"yellow"}, {q:"Fast (opp.)", a:"slow"},
+            {q:"He ___ (to be)", a:"is"}, {q:"They ___ (to be)", a:"are"}, {q:"See (past)", a:"saw"},
+            {q:"Hot (opp.)", a:"cold"}, {q:"Up (opp.)", a:"down"}, {q:"Ocean color", a:"blue"},
+            {q:"Buy (past)", a:"bought"}, {q:"Run (past)", a:"ran"}, {q:"Win (opp.)", a:"lose"}
+        ];
     }
 
     playTick(freq = 440, duration = 0.05) {
-        if (!this.audioCtx) this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        const osc = this.audioCtx.createOscillator();
-        const gain = this.audioCtx.createGain();
-        osc.connect(gain);
-        gain.connect(this.audioCtx.destination);
-        osc.frequency.value = freq;
-        gain.gain.setValueAtTime(0.1, this.audioCtx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.0001, this.audioCtx.currentTime + duration);
-        osc.start();
-        osc.stop(this.audioCtx.currentTime + duration);
+        try {
+            if (!this.audioCtx) this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const osc = this.audioCtx.createOscillator();
+            const gain = this.audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(this.audioCtx.destination);
+            osc.frequency.value = freq;
+            gain.gain.setValueAtTime(0.1, this.audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.0001, this.audioCtx.currentTime + duration);
+            osc.start();
+            osc.stop(this.audioCtx.currentTime + duration);
+        } catch(e) {}
     }
 
-    saveProgress() { localStorage.setItem(`redline_pro_save_${this.currentGameType}`, this.level); }
-    loadProgress(type) { return parseInt(localStorage.getItem(`redline_pro_save_${type}`)) || 1; }
+    saveProgress() { localStorage.setItem(`redline_pro_v2_${this.currentGameType}`, this.level); }
+    loadProgress(type) { return parseInt(localStorage.getItem(`redline_pro_v2_${type}`)) || 1; }
 
     resetCurrentGameProgress() {
-        if(confirm("Reset progress?")) { this.level = 1; this.saveProgress(); this.switchGame(this.currentGameType); }
+        if(confirm("Reset Level?")) { this.level = 1; this.saveProgress(); this.switchGame(this.currentGameType); }
     }
 
     updateTheme() {
-        let color = "#e74c3c"; // Red
+        let color = "#e74c3c"; 
         let title = "REDLINE";
-        
-        if (this.level > 10) {
-            color = "#9b59b6"; // Purple
-            title = "THE VOID";
-        } else if (this.level > 5) {
-            color = "#2ecc71"; // Green
-            title = "MATRIX";
-        }
+        if (this.level > 10) { color = "#9b59b6"; title = "THE VOID"; }
+        else if (this.level > 5) { color = "#2ecc71"; title = "MATRIX"; }
 
         document.documentElement.style.setProperty('--accent', color);
         document.getElementById('title-text').innerText = `🧠 BRAIN SPEED: ${title}`;
@@ -235,21 +239,17 @@ class GameManager {
         document.getElementById('level-display').innerText = this.level;
     }
 
-    updateHUD() {
-        this.updateTheme();
-        document.getElementById('timer-box').className = (this.currentGameType === 'dots') ? "" : "hidden";
-    }
-
     switchGame(type) {
         this.currentGameType = type;
         this.level = this.loadProgress(type);
-        this.updateHUD();
+        this.updateTheme();
         this.overlay.classList.remove('hidden');
         this.startBtn.classList.remove('hidden');
         document.getElementById('reset-btn').classList.remove('hidden');
         document.getElementById('overlay-title').innerText = `${type.toUpperCase()} - LVL ${this.level}`;
-        document.getElementById('overlay-msg').innerText = "Sudden Death Active.";
+        document.getElementById('overlay-msg').innerText = "Sudden Death. Good luck.";
         document.getElementById('input-area').style.display = (type === 'dots') ? 'none' : 'block';
+        document.getElementById('timer-box').className = (type === 'dots') ? "" : "hidden";
     }
 
     startGame() {
@@ -278,16 +278,12 @@ class GameManager {
         this.timerInterval = setInterval(() => {
             this.timeLeft--;
             document.getElementById('timer-display').innerText = this.timeLeft;
-            
             if(this.timeLeft <= 5 && this.timeLeft > 0) {
-                document.getElementById('timer-display').className = "timer-warning";
                 this.container.classList.add('shake');
                 this.playTick(880, 0.1);
             } else {
-                document.getElementById('timer-display').className = "";
                 this.container.classList.remove('shake');
             }
-            
             if(this.timeLeft <= 0) this.stopGame('gameover');
         }, 1000);
     }
@@ -308,7 +304,7 @@ class GameManager {
         } else {
             this.level++;
             this.saveProgress();
-            this.updateHUD(); 
+            this.updateTheme(); 
             document.getElementById('overlay-title').innerText = "LEVEL CLEAR";
             this.startBtn.innerText = "NEXT LEVEL";
         }
@@ -317,21 +313,28 @@ class GameManager {
     startScrollingGame() {
         const loop = () => { if(this.isPlaying) { this.updatePositions(); this.gameLoopId = requestAnimationFrame(loop); } };
         this.gameLoopId = requestAnimationFrame(loop);
-        let spawnRate = Math.max(1200, 4000 - (this.level * 120)); 
+        let spawnRate = Math.max(1200, 4000 - (this.level * 110)); 
         this.spawnInterval = setInterval(() => this.spawnQuestion(), spawnRate);
     }
 
     spawnQuestion() {
-        if(this.questionsAnsweredInLevel + this.activeEntities.length >= 10) return;
-        let content = (this.currentGameType === 'math') ? this.generateMath() : this.generateGrammar();
+        if(!this.isPlaying || (this.questionsAnsweredInLevel + this.activeEntities.length >= 10)) return;
+        
+        let content;
+        if(this.currentGameType === 'math') {
+            content = this.generateMath();
+        } else {
+            content = this.grammarBank[Math.floor(Math.random() * this.grammarBank.length)];
+        }
+
         const el = document.createElement('div');
         el.className = 'question-bubble';
-        el.innerText = content.text;
-        el.style.top = (40 + Math.random() * (this.container.clientHeight - 120)) + 'px';
-        el.style.left = '-180px';
+        el.innerText = content.q || content.text;
+        el.style.top = (50 + Math.random() * (this.container.clientHeight - 120)) + 'px';
+        el.style.left = '-200px';
         this.container.appendChild(el);
         this.activeEntities.push({
-            el: el, x: -180, speed: 0.65 + (this.level * 0.05), answer: content.answer.toString().toLowerCase()
+            el: el, x: -200, speed: 0.70 + (this.level * 0.06), answer: (content.a || content.answer).toString().toLowerCase()
         });
     }
 
@@ -352,10 +355,8 @@ class GameManager {
             this.questionsAnsweredInLevel++;
             this.combo++;
             this.input.value = '';
-            
             if(this.combo >= 3) this.input.classList.add('combo-glow');
-            this.playTick(600 + (this.combo * 50), 0.05);
-
+            this.playTick(600 + (this.combo * 40), 0.05);
             if(this.questionsAnsweredInLevel >= 10) this.stopGame('levelup');
         }
     }
@@ -367,21 +368,16 @@ class GameManager {
         this.mathTypeCounter++;
         if(currentType === 0) { a = Math.floor(Math.random() * maxNum) + 1; b = Math.floor(Math.random() * maxNum) + 1; q = `${a} + ${b}`; ans = a + b; }
         else if(currentType === 1) { b = Math.floor(Math.random() * maxNum) + 1; ans = Math.floor(Math.random() * maxNum) + 1; a = ans + b; q = `${a} - ${b}`; }
-        else if(currentType === 2) { a = Math.floor(Math.random() * 5) + 1; b = Math.floor(Math.random() * 4) + 1; q = `${a} × ${b}`; ans = a * b; }
-        else { ans = Math.floor(Math.random() * 4) + 1; b = Math.floor(Math.random() * 3) + 1; a = ans * b; q = `${a} ÷ ${b}`; }
+        else if(currentType === 2) { a = Math.floor(Math.random() * 6) + 1; b = Math.floor(Math.random() * 5) + 1; q = `${a} × ${b}`; ans = a * b; }
+        else { ans = Math.floor(Math.random() * 5) + 1; b = Math.floor(Math.random() * 4) + 1; a = ans * b; q = `${a} ÷ ${b}`; }
         return { text: q, answer: ans };
-    }
-
-    generateGrammar() {
-        const bank = [{q:"Antonym: Fast", a:"slow"}, {q:"Past: Eat", a:"ate"}, {q:"Sky color", a:"blue"}, {q:"12 months =", a:"year"}];
-        return bank[Math.floor(Math.random() * bank.length)];
     }
 
     startDotGame() {
         let current = 1;
         const dotList = [];
         const total = 5 + Math.floor(this.level / 2);
-        const padding = 80;
+        const padding = 85;
 
         for(let i=1; i<=total; i++) {
             let x, y, overlap;
@@ -395,7 +391,7 @@ class GameManager {
                     if(dist < padding) { overlap = true; break; }
                 }
                 attempts++;
-            } while(overlap && attempts < 100);
+            } while(overlap && attempts < 150);
 
             const dot = document.createElement('div');
             dot.className = 'dot'; dot.innerText = i;
@@ -403,7 +399,7 @@ class GameManager {
             dotList.push({x, y});
             dot.onclick = () => {
                 if(parseInt(dot.innerText) === current) {
-                    this.playTick(1000 + (current * 50), 0.05);
+                    this.playTick(1000 + (current * 40), 0.05);
                     dot.remove(); current++;
                     if(current > total) this.stopGame('levelup');
                 } else { this.stopGame('gameover'); }
