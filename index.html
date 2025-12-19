@@ -1,225 +1,314 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Brain Trainer Pro</title>
-<style>
-:root {
-    --bg:#000;
-    --accent:#e74c3c;
-    --panel:#1a1a1a;
-    --text:#fff;
-    --gold:#f1c40f;
-}
-* { box-sizing: border-box; }
-body { margin:0; font-family:Segoe UI,Arial,sans-serif; background:var(--bg); color:var(--text); display:flex; flex-direction:column; min-height:100vh;}
-header { background:#200; border-bottom:4px solid var(--accent); text-align:center; padding:10px; }
-button { background:#000; border:2px solid var(--accent); color:#fff; padding:8px 14px; margin:3px; border-radius:6px; font-weight:bold; cursor:pointer;}
-button:hover { background:var(--accent); }
-#hud { display:flex; justify-content:space-around; color:var(--accent); padding:6px; font-size:1.1rem; flex-wrap:wrap; }
-#game { flex:1; margin:8px; border:3px solid var(--accent); border-radius:12px; background:var(--panel); position:relative; overflow:hidden; }
-.overlay { position:absolute; inset:0; background:rgba(0,0,0,.95); display:flex; flex-direction:column; justify-content:center; align-items:center; z-index:99; }
-.hidden { display:none; }
-input { padding:12px; font-size:1.2rem; border-radius:10px; border:2px solid var(--accent); background:#111; color:var(--accent); text-align:center; width:80%; max-width:400px; }
-.bubble { position:absolute; background:var(--accent); color:#fff; padding:10px 18px; border-radius:25px; font-weight:bold; white-space:nowrap; }
-.dot { width:60px; height:60px; border-radius:50%; background:var(--accent); color:#fff; display:flex; align-items:center; justify-content:center; font-size:1.5rem; font-weight:bold; border:3px solid #fff; position:absolute; cursor:pointer; }
-#leaderboardBox { position:absolute; top:10px; right:10px; background:#111; padding:10px; border-radius:10px; border:2px solid var(--accent); max-width:200px; max-height:400px; overflow:auto; }
-@media(max-width:600px){ .bubble{font-size:1rem;padding:6px 12px;} .dot{width:50px;height:50px;font-size:1.2rem;} input{width:90%;font-size:1rem;padding:10px;} #hud{font-size:1rem;} }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brain Trainer Pro</title>
+    <style>
+        :root {
+            --bg:#000;
+            --accent:#e74c3c;
+            --panel:#1a1a1a;
+            --text:#fff;
+            --gold:#f1c40f;
+        }
+        * { box-sizing: border-box; }
+        body { margin:0; font-family:'Segoe UI',Arial,sans-serif; background:var(--bg); color:var(--text); display:flex; flex-direction:column; min-height:100vh; overflow: hidden;}
+        header { background:#200; border-bottom:4px solid var(--accent); text-align:center; padding:10px; }
+        button { background:#000; border:2px solid var(--accent); color:#fff; padding:8px 14px; margin:3px; border-radius:6px; font-weight:bold; cursor:pointer;}
+        button:hover { background:var(--accent); }
+        
+        #hud { display:flex; justify-content:space-around; color:var(--accent); padding:6px; font-size:1.1rem; }
+        #game { flex:1; margin:8px; border:3px solid var(--accent); border-radius:12px; background:var(--panel); position:relative; overflow:hidden; }
+        
+        .overlay { position:absolute; inset:0; background:rgba(0,0,0,.9); display:flex; flex-direction:column; justify-content:center; align-items:center; z-index:99; }
+        .hidden { display:none !important; }
+        
+        input { padding:12px; font-size:1.2rem; border-radius:10px; border:2px solid var(--accent); background:#111; color:var(--accent); text-align:center; width:80%; max-width:400px; }
+        
+        .bubble { position:absolute; background:var(--accent); color:#fff; padding:10px 18px; border-radius:25px; font-weight:bold; white-space:nowrap; transition: top 0.2s; }
+        .dot { width:60px; height:60px; border-radius:50%; background:var(--accent); color:#fff; display:flex; align-items:center; justify-content:center; font-size:1.5rem; font-weight:bold; border:3px solid #fff; position:absolute; cursor:pointer; }
+        
+        #leaderboardBox { position:absolute; top:10px; right:10px; background:rgba(17,17,17,0.8); padding:10px; border-radius:10px; border:1px solid var(--accent); max-width:150px; max-height:200px; overflow-y:auto; font-size: 0.8rem; pointer-events: none;}
+        #inputArea { text-align:center; padding:15px; background: #000; }
+        
+        @media(max-width:600px){ 
+            .dot { width:50px; height:50px; } 
+            #leaderboardBox { display: none; }
+        }
+    </style>
 
-<!-- Firebase SDK -->
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 </head>
 <body>
 
 <header>
-<h2>Brain Speed Trainer Pro</h2>
-<div>
-<button onclick="game.switchGame('math')">MATH</button>
-<button onclick="game.switchGame('grammar')">GRAMMAR</button>
-<button onclick="game.switchGame('dots')">DOTS</button>
-</div>
+    <h2>Brain Speed Trainer</h2>
+    <div>
+        <button onclick="game.switchGame('math')">MATH</button>
+        <button onclick="game.switchGame('grammar')">GRAMMAR</button>
+        <button onclick="game.switchGame('dots')">DOTS</button>
+    </div>
 </header>
 
 <div id="hud">
-<span>LEVEL: <span id="lvl">1</span></span>
-<span id="timer" class="hidden">TIME: <span id="time">30</span></span>
+    <span>LEVEL: <span id="lvlDisplay">1</span></span>
+    <span id="timerContainer" class="hidden">TIME: <span id="timeDisplay">30</span></span>
 </div>
 
 <div id="game">
-<div id="nameBox" class="overlay">
-<h3 style="color:var(--gold)">ENTER NAME</h3>
-<input id="nameInput" maxlength="12">
-<button onclick="game.setName()">START</button>
+    <div id="nameBox" class="overlay">
+        <h3 style="color:var(--gold)">ENTER YOUR NAME</h3>
+        <input id="nameInput" maxlength="12" placeholder="Your Name...">
+        <br>
+        <button onclick="game.setName()">SAVE & START</button>
+    </div>
+
+    <div id="gameOverlay" class="overlay hidden">
+        <h2 id="msgDisplay">READY?</h2>
+        <button id="startBtn" onclick="game.start()">START LEVEL</button>
+    </div>
+
+    <div id="leaderboardBox">
+        <h4 style="margin:0 0 5px 0; color:var(--gold)">Top Scores</h4>
+        <ul id="leaderList" style="padding-left:16px;margin:0; list-style: none; padding:0;"></ul>
+    </div>
 </div>
 
-<div id="overlay" class="overlay hidden">
-<h2 id="msg">READY?</h2>
-<button onclick="game.start()">START</button>
-</div>
-
-<div id="leaderboardBox">
-<h4 style="margin:0 0 5px 0;">Top 30</h4>
-<ul id="leaderList" style="padding-left:16px;margin:0;"></ul>
-</div>
-</div>
-
-<div style="text-align:center;padding:8px" id="inputBox">
-<input id="answer" placeholder="Type answer">
+<div id="inputArea" class="hidden">
+    <input id="answerInput" placeholder="Type answer here..." autocomplete="off">
 </div>
 
 <script>
-// Firebase config (replace with your own)
+// Firebase config - REPLACE THESE WITH YOUR KEYS
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-  databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT_ID.appspot.com",
-  messagingSenderId: "SENDER_ID",
-  appId: "APP_ID"
+    apiKey: "YOUR_API_KEY",
+    authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+    databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com",
+    projectId: "YOUR_PROJECT_ID",
+    storageBucket: "YOUR_PROJECT_ID.appspot.com",
+    messagingSenderId: "SENDER_ID",
+    appId: "APP_ID"
 };
-firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
 
+// Initialize Firebase only if keys are provided
+let db = null;
+try {
+    if(firebaseConfig.apiKey !== "YOUR_API_KEY") {
+        firebase.initializeApp(firebaseConfig);
+        db = firebase.database();
+    }
+} catch(e) { console.error("Firebase not connected"); }
+
+// Placeholder Sounds (Silent Data URIs)
 const sndCorrect = new Audio("data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YQgAAAAA");
 const sndWrong = new Audio("data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YQgAAAAA");
-const sndLevel = new Audio("data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YQgAAAAA");
 
-class Game {
-  constructor() {
-    this.name = localStorage.getItem("bt_name") || "";
-    this.level = 1;
-    this.mode = null;
-    this.active = [];
-    this.lastIdx = -1;
-    this.gameEl = document.getElementById("game");
-    this.grammar = [
-      {q:"Happy (opp.)",a:"sad"},{q:"Fast (opp.)",a:"slow"},{q:"Big (opp.)",a:"small"},
-      {q:"Hot (opp.)",a:"cold"},{q:"Color: Sky",a:"blue"},{q:"Color: Grass",a:"green"},
-      {q:"Go (past)",a:"went"},{q:"Eat (past)",a:"ate"},{q:"Run (past)",a:"ran"},
-      {q:"Read (past)",a:"read"},{q:"I ___ to school yesterday",a:"went"},{q:"She ___ an apple",a:"ate"},
-      {q:"They ___ the match",a:"won"}
-    ];
-    this.grammar = [...new Map(this.grammar.map(o=>[o.q,o])).values()];
+class BrainGame {
+    constructor() {
+        this.name = localStorage.getItem("bt_name") || "";
+        this.level = 1;
+        this.mode = null;
+        this.activeBubbles = [];
+        this.isPlaying = false;
+        this.spawnTimer = null;
+        this.updateTimer = null;
+        this.clockTimer = null;
+        this.count = 0;
+        
+        this.grammarPool = [
+            {q:"Happy (opp.)",a:"sad"},{q:"Fast (opp.)",a:"slow"},{q:"Big (opp.)",a:"small"},
+            {q:"Hot (opp.)",a:"cold"},{q:"Color: Sky",a:"blue"},{q:"Color: Grass",a:"green"},
+            {q:"Go (past)",a:"went"},{q:"Eat (past)",a:"ate"},{q:"Run (past)",a:"ran"},
+            {q:"Read (past)",a:"read"},{q:"I ___ to school",a:"went"},{q:"She ___ an apple",a:"ate"}
+        ];
 
-    if(this.name) document.getElementById("nameBox").classList.add("hidden");
-  }
-
-  setName() {
-    const v = nameInput.value.trim();
-    if(v.length>1){ 
-      this.name = v; 
-      localStorage.setItem("bt_name",v);
-      nameBox.classList.add("hidden");
-      this.updateLeaderboard();
+        if(this.name) {
+            document.getElementById("nameBox").classList.add("hidden");
+            this.updateLeaderboard();
+        }
     }
-  }
 
-  switchGame(mode){
-    this.mode = mode;
-    overlay.classList.remove("hidden");
-    msg.innerText = `${mode.toUpperCase()} - LVL ${this.level}`;
-    inputBox.style.display = mode==="dots"?"none":"block";
-    timer.classList.toggle("hidden", mode!=="dots");
-  }
-
-  start(){
-    overlay.classList.add("hidden");
-    this.clear();
-    this.active=[];
-    this.count=0;
-    lvl.innerText=this.level;
-    if(this.mode==="dots") this.startDots();
-    else this.loop=setInterval(()=>this.spawn(), Math.max(700,2500-this.level*200));
-  }
-
-  clear(){
-    clearInterval(this.loop);
-    clearInterval(this.clock);
-    this.gameEl.querySelectorAll(".bubble,.dot").forEach(e=>e.remove());
-  }
-
-  spawn(){
-    if(this.count>=10) return this.win();
-    let q,a;
-    if(this.mode==="grammar"){
-      let pool = this.grammar;
-      let i; do { i=Math.floor(Math.random()*pool.length); } while(i===this.lastIdx);
-      this.lastIdx=i; q=pool[i].q; a=pool[i].a;
-    } else { 
-      let x = r(10+this.level), y=r(10);
-      q = `${x}+${y}`; a = `${x+y}`;
+    setName() {
+        const val = document.getElementById("nameInput").value.trim();
+        if(val.length > 1) {
+            this.name = val;
+            localStorage.setItem("bt_name", val);
+            document.getElementById("nameBox").classList.add("hidden");
+            this.updateLeaderboard();
+        }
     }
-    const b = document.createElement("div");
-    b.className="bubble"; b.innerText=q;
-    b.style.top = Math.random()*(this.gameEl.clientHeight-40) + "px";
-    this.gameEl.appendChild(b);
-    this.active.push({el:b, x:-200, a:a});
-    this.count++;
-  }
 
-  update(){
-    this.active.forEach(o=>{
-      o.x+=1+this.level*0.15; o.el.style.left=o.x+"px";
-      if(o.x>this.gameEl.clientWidth) this.lose();
-    });
-  }
-
-  check(v){
-    const i=this.active.findIndex(o=>o.a.toLowerCase()===v.toLowerCase().trim());
-    if(i>-1){
-      sndCorrect.play();
-      this.active[i].el.remove();
-      this.active.splice(i,1); answer.value="";
-      if(this.count>=10 && this.active.length===0) this.win();
+    switchGame(mode) {
+        this.stop();
+        this.mode = mode;
+        this.level = 1;
+        document.getElementById("lvlDisplay").innerText = this.level;
+        document.getElementById("gameOverlay").classList.remove("hidden");
+        document.getElementById("msgDisplay").innerText = `${mode.toUpperCase()} MODE`;
+        document.getElementById("startBtn").innerText = "START";
     }
-  }
 
-  startDots(){
-    let cur=1, total=5+Math.floor(this.level/2);
-    this.time=30; time.innerText=this.time;
-    this.clock=setInterval(()=>{ this.time--; time.innerText=this.time; if(this.time<=0) this.lose(); },1000);
-    for(let i=1;i<=total;i++){
-      let d=document.createElement("div");
-      d.className="dot"; d.innerText=i;
-      d.style.left=Math.random()*(this.gameEl.clientWidth-60)+"px";
-      d.style.top=Math.random()*(this.gameEl.clientHeight-60)+"px";
-      d.onclick=()=>{
-        if(i===cur){ d.remove(); cur++; if(cur>total) this.win(); }
-        else this.lose();
-      }
-      this.gameEl.appendChild(d);
+    start() {
+        this.stop();
+        this.isPlaying = true;
+        this.count = 0;
+        this.activeBubbles = [];
+        document.getElementById("gameOverlay").classList.add("hidden");
+        document.getElementById("lvlDisplay").innerText = this.level;
+
+        if(this.mode === 'dots') {
+            this.startDots();
+        } else {
+            document.getElementById("inputArea").classList.remove("hidden");
+            document.getElementById("answerInput").focus();
+            // Start spawning
+            this.spawnTimer = setInterval(() => this.spawn(), Math.max(800, 3000 - (this.level * 250)));
+            // Start moving
+            this.updateTimer = setInterval(() => this.updateLogic(), 16);
+        }
     }
-  }
 
-  win(){ sndLevel.play(); this.clear(); this.level++; overlay.classList.remove("hidden"); msg.innerText="LEVEL UP!"; this.submitScore(); }
-  lose(){ sndWrong.play(); this.clear(); overlay.classList.remove("hidden"); msg.innerText="GAME OVER"; }
+    stop() {
+        this.isPlaying = false;
+        clearInterval(this.spawnTimer);
+        clearInterval(this.updateTimer);
+        clearInterval(this.clockTimer);
+        document.getElementById("game").querySelectorAll(".bubble, .dot").forEach(e => e.remove());
+        document.getElementById("inputArea").classList.add("hidden");
+        document.getElementById("timerContainer").classList.add("hidden");
+        document.getElementById("answerInput").value = "";
+    }
 
-  submitScore(){
-    if(!this.name) return;
-    db.ref('leaderboard').push({name:this.name,score:this.level,timestamp:Date.now()});
-    this.updateLeaderboard();
-  }
+    spawn() {
+        if(!this.isPlaying || this.count >= 10) return;
 
-  updateLeaderboard(){
-    db.ref('leaderboard').orderByChild('score').limitToLast(30).on('value', snapshot=>{
-      let data=[]; snapshot.forEach(s=>data.push(s.val()));
-      data.sort((a,b)=>b.score-a.score);
-      leaderList.innerHTML='';
-      data.forEach(e=>{
-        let li=document.createElement('li'); li.innerText=`${e.name}: ${e.score}`; leaderList.appendChild(li);
-      });
-    });
-  }
+        let q, a;
+        if(this.mode === "grammar") {
+            let item = this.grammarPool[Math.floor(Math.random() * this.grammarPool.length)];
+            q = item.q; a = item.a;
+        } else {
+            let x = Math.floor(Math.random() * (10 + this.level));
+            let y = Math.floor(Math.random() * 10);
+            q = `${x} + ${y}`; a = `${x + y}`;
+        }
+
+        const el = document.createElement("div");
+        el.className = "bubble";
+        el.innerText = q;
+        el.style.top = Math.random() * (document.getElementById("game").clientHeight - 50) + "px";
+        el.style.left = "-150px";
+        document.getElementById("game").appendChild(el);
+
+        this.activeBubbles.push({ el, x: -150, a: a.toLowerCase() });
+        this.count++;
+    }
+
+    updateLogic() {
+        if(!this.isPlaying) return;
+        this.activeBubbles.forEach((obj, index) => {
+            obj.x += (0.8 + (this.level * 0.3));
+            obj.el.style.left = obj.x + "px";
+
+            if(obj.x > document.getElementById("game").clientWidth) {
+                this.lose();
+            }
+        });
+    }
+
+    checkAnswer(val) {
+        if(!this.isPlaying) return;
+        const index = this.activeBubbles.findIndex(b => b.a === val.toLowerCase().trim());
+        if(index > -1) {
+            sndCorrect.play();
+            this.activeBubbles[index].el.remove();
+            this.activeBubbles.splice(index, 1);
+            document.getElementById("answerInput").value = "";
+            
+            if(this.count >= 10 && this.activeBubbles.length === 0) {
+                this.win();
+            }
+        }
+    }
+
+    startDots() {
+        document.getElementById("timerContainer").classList.remove("hidden");
+        let currentDot = 1;
+        let totalDots = 5 + Math.floor(this.level / 1.5);
+        let timeLeft = 30;
+        
+        document.getElementById("timeDisplay").innerText = timeLeft;
+        this.clockTimer = setInterval(() => {
+            timeLeft--;
+            document.getElementById("timeDisplay").innerText = timeLeft;
+            if(timeLeft <= 0) this.lose();
+        }, 1000);
+
+        for(let i=1; i<=totalDots; i++) {
+            const d = document.createElement("div");
+            d.className = "dot";
+            d.innerText = i;
+            d.style.left = Math.random() * (document.getElementById("game").clientWidth - 70) + "px";
+            d.style.top = Math.random() * (document.getElementById("game").clientHeight - 70) + "px";
+            d.onclick = () => {
+                if(i === currentDot) {
+                    d.remove();
+                    currentDot++;
+                    if(currentDot > totalDots) this.win();
+                } else {
+                    this.lose();
+                }
+            };
+            document.getElementById("game").appendChild(d);
+        }
+    }
+
+    win() {
+        this.stop();
+        this.level++;
+        this.submitScore();
+        document.getElementById("gameOverlay").classList.remove("hidden");
+        document.getElementById("msgDisplay").innerText = "LEVEL CLEAR!";
+        document.getElementById("startBtn").innerText = "NEXT LEVEL";
+    }
+
+    lose() {
+        sndWrong.play();
+        this.stop();
+        document.getElementById("gameOverlay").classList.remove("hidden");
+        document.getElementById("msgDisplay").innerText = "GAME OVER";
+        document.getElementById("startBtn").innerText = "TRY AGAIN";
+        this.level = 1;
+    }
+
+    submitScore() {
+        if(!db || !this.name) return;
+        db.ref('leaderboard').push({
+            name: this.name,
+            score: this.level,
+            timestamp: Date.now()
+        });
+    }
+
+    updateLeaderboard() {
+        if(!db) return;
+        db.ref('leaderboard').orderByChild('score').limitToLast(10).on('value', snap => {
+            let list = [];
+            snap.forEach(s => list.push(s.val()));
+            list.sort((a,b) => b.score - a.score);
+            const html = list.map(i => `<li>${i.name}: Lvl ${i.score}</li>`).join('');
+            document.getElementById("leaderList").innerHTML = html;
+        });
+    }
 }
 
-function r(n){return Math.floor(Math.random()*n)+1;}
-const game = new Game();
-setInterval(()=>game.update(),16);
-answer.addEventListener("input", e=>game.check(e.target.value));
+const game = new BrainGame();
+
+// Global Listeners
+document.getElementById("answerInput").addEventListener("input", (e) => {
+    game.checkAnswer(e.target.value);
+});
 </script>
 
 </body>
