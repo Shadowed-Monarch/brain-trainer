@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Brain Train: Redline Optimized</title>
+    <title>Brain Train: Redline Final</title>
     <style>
         :root {
             --primary: #000000;
@@ -22,20 +22,19 @@
             align-items: center;
             height: 100vh;
             overflow: hidden;
-            transition: background 0.5s ease;
         }
 
         header {
             width: 100%;
             background: rgba(142, 0, 0, 0.5);
-            padding: 0.5rem;
+            padding: 8px;
             text-align: center;
             border-bottom: 4px solid var(--accent);
             z-index: 10;
         }
 
         .nav-buttons button {
-            padding: 8px 15px;
+            padding: 6px 12px;
             margin: 2px;
             border: 2px solid var(--accent);
             border-radius: 5px;
@@ -43,16 +42,16 @@
             background: var(--primary);
             color: white;
             font-weight: bold;
+            font-size: 0.8rem;
         }
 
         #hud {
             display: flex;
             justify-content: space-around;
             width: 100%;
-            padding: 10px 0;
-            font-size: 1.2rem;
+            padding: 5px 0;
+            font-size: 1rem;
             color: var(--accent);
-            font-weight: bold;
         }
 
         #game-container {
@@ -64,19 +63,18 @@
             border: 3px solid var(--accent);
             border-radius: 10px;
             overflow: hidden;
-            /* Prevents objects from going behind the header on mobile */
-            margin-top: 5px; 
+            margin-top: 5px;
         }
 
         .question-bubble {
             position: absolute;
             background: var(--accent);
             color: white;
-            padding: 10px 20px;
-            border-radius: 25px;
-            font-size: 1.1rem;
+            padding: 10px 18px;
+            border-radius: 20px;
+            font-size: 1rem;
             font-weight: bold;
-            box-shadow: 0 0 10px var(--accent);
+            box-shadow: 0 0 8px var(--accent);
             white-space: nowrap;
             will-change: transform;
             z-index: 5;
@@ -84,7 +82,7 @@
 
         .dot {
             position: absolute;
-            width: 60px; height: 60px;
+            width: 55px; height: 55px;
             background: var(--accent);
             color: white;
             border-radius: 50%;
@@ -96,23 +94,16 @@
             touch-action: manipulation;
         }
 
-        #input-area { 
-            width: 100%; 
-            display: none; 
-            text-align: center; 
-            padding: 10px 0;
-            z-index: 20;
-        }
-
+        #input-area { width: 100%; display: none; text-align: center; padding: 10px 0; }
         input {
             padding: 12px;
-            font-size: 1.4rem;
-            width: 85%;
-            max-width: 400px;
+            font-size: 1.2rem;
+            width: 80%;
+            max-width: 350px;
             background: #222;
             color: var(--accent);
-            border: 3px solid var(--accent);
-            border-radius: 10px;
+            border: 2px solid var(--accent);
+            border-radius: 8px;
             outline: none;
         }
 
@@ -125,24 +116,20 @@
             align-items: center;
             justify-content: center;
             z-index: 100;
-            text-align: center;
         }
 
         .hidden { display: none !important; }
 
-        /* Mobile specific adjustments */
         @media (max-width: 600px) {
-            #game-container { height: 320px; }
-            .dot { width: 45px; height: 45px; }
-            /* Shift game up when keyboard might be out */
-            body.keyboard-out header { display: none; }
+            #game-container { height: 300px; }
+            .question-bubble { padding: 8px 15px; font-size: 0.9rem; }
         }
     </style>
 </head>
 <body>
 
-<header id="main-header">
-    <h1 style="margin:0; font-size: 1.2rem;">🧠 BRAIN SPEED: REDLINE</h1>
+<header>
+    <h1 style="margin:0; font-size: 1rem;">🧠 BRAIN SPEED</h1>
     <div class="nav-buttons">
         <button onclick="gameManager.switchGame('math')">MATH</button>
         <button onclick="gameManager.switchGame('grammar')">GRAMMAR</button>
@@ -152,20 +139,19 @@
 
 <div id="hud">
     <span>LVL: <span id="level-display">1</span></span>
-    <span id="timer-box" class="hidden">TIME: <span id="timer-display">30</span>s</span>
+    <span id="timer-box" class="hidden">TIME: <span id="timer-display">30</span></span>
 </div>
 
 <div id="game-container">
     <div id="overlay">
         <h2 id="overlay-title">READY?</h2>
-        <p id="overlay-msg">Choose a mode to begin.</p>
-        <button id="start-btn" class="hidden" onclick="gameManager.startGame()" style="padding: 15px 40px; font-size: 1.2rem;">START</button>
-        <button id="reset-btn" class="hidden" style="color: grey; font-size: 0.7rem; margin-top: 20px;" onclick="gameManager.resetCurrentGameProgress()">Reset Progress</button>
+        <button id="start-btn" class="hidden" onclick="gameManager.startGame()">START</button>
+        <button id="reset-btn" class="hidden" style="color: grey; font-size: 0.7rem; margin-top: 15px;" onclick="gameManager.resetCurrentGameProgress()">Reset Data</button>
     </div>
 </div>
 
 <div id="input-area">
-    <input type="text" id="player-input" placeholder="Type answer..." autocomplete="off">
+    <input type="text" id="player-input" placeholder="Type here..." autocomplete="off">
 </div>
 
 <script>
@@ -183,31 +169,25 @@ class GameManager {
         this.overlay = document.getElementById('overlay');
         this.startBtn = document.getElementById('start-btn');
 
-        // Difficulty based Question Banks
         this.grammarBank = {
-            easy: [ // Levels 1-10
-                {q:"Opposite of: Big", a:["small", "tiny"]}, {q:"Opposite of: Hot", a:["cold"]},
-                {q:"Opposite of: Up", a:["down"]}, {q:"Opposite of: In", a:["out"]},
-                {q:"Synonym of: Fast", a:["quick", "rapid"]}, {q:"Synonym of: Sad", a:["unhappy"]},
-                {q:"Color of: Grass", a:["green"]}, {q:"Color of: Sky", a:["blue"]},
-                {q:"Opposite of: Happy", a:["sad"]}, {q:"Opposite of: Go", a:["stop"]}
+            low: [
+                {q:"Opposite: Small", a:["big", "huge", "large"]}, {q:"Opposite: Cold", a:["hot", "warm"]},
+                {q:"Synonym: Sad", a:["unhappy", "upset"]}, {q:"Synonym: Fast", a:["quick", "rapid"]},
+                {q:"Opposite: Up", a:["down"]}, {q:"Opposite: Left", a:["right"]},
+                {q:"Color: Banana", a:["yellow"]}, {q:"Color: Coal", a:["black"]}
             ],
-            medium: [ // Levels 11-25
-                {q:"Baby of: Dog", a:["puppy", "pup"]}, {q:"Baby of: Cat", a:["kitten", "kitty"]},
-                {q:"Past tense: Go", a:["went"]}, {q:"Past tense: Eat", a:["ate"]},
-                {q:"Opposite of: Rich", a:["poor"]}, {q:"Opposite of: Hard", a:["soft", "easy"]},
-                {q:"Baby of: Lion", a:["cub"]}, {q:"Baby of: Sheep", a:["lamb"]}
+            mid: [
+                {q:"Past tense: See", a:["saw"]}, {q:"Past tense: Run", a:["ran"]},
+                {q:"Opposite: Rich", a:["poor"]}, {q:"Opposite: Hard", a:["soft", "easy"]},
+                {q:"Synonym: Smart", a:["intelligent", "bright", "clever"]},
+                {q:"Synonym: Silent", a:["quiet", "still"]}
             ],
-            hard: [ // Levels 26-50
-                {q:"Opposite of: Arrive", a:["depart", "leave"]}, {q:"Past tense: Buy", a:["bought"]},
-                {q:"Opposite of: Brave", a:["cowardly", "scared"]}, {q:"Synonym of: Huge", a:["massive", "giant"]},
-                {q:"Synonym of: Smart", a:["intelligent", "bright"]}, {q:"Past tense: Think", a:["thought"]}
+            high: [
+                {q:"Past tense: Catch", a:["caught"]}, {q:"Opposite: Arrive", a:["depart", "leave"]},
+                {q:"Synonym: Difficult", a:["hard", "tough"]}, {q:"Opposite: Brave", a:["cowardly"]},
+                {q:"Past tense: Speak", a:["spoke"]}, {q:"Past tense: Teach", a:["taught"]}
             ]
         };
-
-        // Keyboard detection for mobile
-        this.input.addEventListener('focus', () => document.body.classList.add('keyboard-out'));
-        this.input.addEventListener('blur', () => document.body.classList.remove('keyboard-out'));
     }
 
     saveProgress() { localStorage.setItem(`rs_pro_v3_${this.currentGameType}`, this.level); }
@@ -221,13 +201,9 @@ class GameManager {
         this.overlay.classList.remove('hidden');
         this.startBtn.classList.remove('hidden');
         document.getElementById('reset-btn').classList.remove('hidden');
-        document.getElementById('overlay-title').innerText = `${type.toUpperCase()} - LVL ${this.level}`;
+        document.getElementById('overlay-title').innerText = `${type.toUpperCase()} LVL ${this.level}`;
         document.getElementById('input-area').style.display = (type === 'dots') ? 'none' : 'block';
         document.getElementById('timer-box').className = (type === 'dots') ? "" : "hidden";
-        
-        // Dynamic theme color
-        let color = this.level > 25 ? "#9b59b6" : (this.level > 10 ? "#2ecc71" : "#e74c3c");
-        document.documentElement.style.setProperty('--accent', color);
     }
 
     startGame() {
@@ -252,26 +228,24 @@ class GameManager {
         const loop = () => { if(this.isPlaying) { this.updatePositions(); this.gameLoopId = requestAnimationFrame(loop); } };
         this.gameLoopId = requestAnimationFrame(loop);
         
-        // SPEED CONTROL: Level 1 is much slower now
-        // Base speed is slower on mobile because screen is shorter
-        let spawnInterval = Math.max(1200, 4000 - (this.level * 100));
-        this.spawnInterval = setInterval(() => this.spawnQuestion(), spawnInterval);
+        // Much slower spawn rate for Level 1
+        let spawnRate = Math.max(1500, 5000 - (this.level * 100));
+        this.spawnInterval = setInterval(() => this.spawnQuestion(), spawnRate);
     }
 
     spawnQuestion() {
         if(!this.isPlaying || (this.questionsAnsweredInLevel + this.activeEntities.length >= 10)) return;
         
-        // Prevent stacking boxes
         const last = this.activeEntities[this.activeEntities.length - 1];
-        if (last && last.x < (this.isMobile ? 120 : 180)) return;
+        if (last && last.x < (this.isMobile ? 150 : 200)) return;
 
         let qData;
         if(this.currentGameType === 'grammar') {
-            let bank = this.level <= 10 ? this.grammarBank.easy : (this.level <= 25 ? this.grammarBank.medium : this.grammarBank.hard);
+            let bank = this.level <= 10 ? this.grammarBank.low : (this.level <= 25 ? this.grammarBank.mid : this.grammarBank.high);
             qData = bank[Math.floor(Math.random() * bank.length)];
         } else {
-            let a = Math.floor(Math.random() * (this.level + 5)) + 1;
-            let b = Math.floor(Math.random() * (this.level + 5)) + 1;
+            let a = Math.floor(Math.random() * (this.level + 3)) + 1;
+            let b = Math.floor(Math.random() * (this.level + 3)) + 1;
             qData = { q: `${a} + ${b}`, a: [(a+b).toString()] };
         }
 
@@ -279,17 +253,15 @@ class GameManager {
         el.className = 'question-bubble';
         el.innerText = qData.q;
         
-        // LANES: Start lower so mobile users can see them under the header
-        const lanes = this.isMobile ? [50, 120, 190, 260] : [70, 150, 230, 310];
+        // Spawn lower to avoid the header area on phones
+        const lanes = this.isMobile ? [80, 150, 220] : [70, 150, 230, 310];
         el.style.top = lanes[Math.floor(Math.random() * lanes.length)] + 'px';
-        
         this.container.appendChild(el);
         
-        // SPEED SCALING: Mobile moves slower because it has less screen space
-        let baseSpeed = this.isMobile ? 0.4 : 0.7;
-        let speed = baseSpeed + (this.level * 0.05);
-
-        this.activeEntities.push({ el, x: -250, speed: speed, answer: qData.a });
+        // SLOWED DOWN: Mobile now starts at 0.3 speed instead of 0.7
+        let baseSpeed = this.isMobile ? 0.35 : 0.7;
+        let speed = baseSpeed + (this.level * 0.04);
+        this.activeEntities.push({ el, x: -280, speed, answer: qData.a });
     }
 
     updatePositions() {
@@ -313,7 +285,6 @@ class GameManager {
         }
     }
 
-    // Timer and Dot Logic (Simplified for brevity but mobile-optimized)
     startTimer() {
         clearInterval(this.timerInterval);
         this.timerInterval = setInterval(() => {
@@ -330,14 +301,14 @@ class GameManager {
         cancelAnimationFrame(this.gameLoopId);
         this.overlay.classList.remove('hidden');
         if(reason === 'gameover') {
-            document.getElementById('overlay-title').innerText = "GAME OVER";
+            document.getElementById('overlay-title').innerText = "FAIL";
             this.startBtn.innerText = "RETRY";
         } else {
             this.level++;
             this.saveProgress();
             this.switchGame(this.currentGameType);
-            document.getElementById('overlay-title').innerText = "LEVEL CLEAR";
-            this.startBtn.innerText = "NEXT LEVEL";
+            document.getElementById('overlay-title').innerText = "SUCCESS";
+            this.startBtn.innerText = "NEXT";
         }
     }
 
