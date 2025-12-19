@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BrainSpeed - Redline Audio</title>
+    <title>BrainSpeed - Pro Edition</title>
     <style>
         :root {
             --primary: #000000;
@@ -22,11 +22,12 @@
             align-items: center;
             height: 100vh;
             overflow: hidden;
+            transition: background 0.5s ease;
         }
 
         header {
             width: 100%;
-            background: #8e0000;
+            background: rgba(142, 0, 0, 0.5);
             padding: 1rem;
             text-align: center;
             border-bottom: 4px solid var(--accent);
@@ -68,6 +69,14 @@
             overflow: hidden;
         }
 
+        /* SCREEN SHAKE ANIMATION */
+        .shake { animation: shake 0.2s infinite; }
+        @keyframes shake {
+            0% { transform: translate(1px, 1px); }
+            50% { transform: translate(-2px, -1px); }
+            100% { transform: translate(1px, 1px); }
+        }
+
         .question-bubble {
             position: absolute;
             left: -180px;
@@ -77,6 +86,7 @@
             border-radius: 30px;
             font-size: 1.5rem;
             font-weight: bold;
+            box-shadow: 0 0 10px var(--accent);
         }
 
         #input-area { margin-top: 20px; display: none; }
@@ -91,12 +101,19 @@
             border: 3px solid var(--accent);
             border-radius: 12px;
             outline: none;
+            transition: box-shadow 0.3s;
+        }
+
+        /* COMBO FIRE EFFECT */
+        .combo-glow {
+            box-shadow: 0 0 30px var(--accent), inset 0 0 15px var(--accent) !important;
+            border-color: white !important;
         }
 
         #overlay {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.95);
+            background: rgba(0, 0, 0, 0.9);
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -123,14 +140,14 @@
             user-select: none;
         }
 
-        .timer-warning { color: #ff0000; animation: blink 0.4s infinite; font-weight: 900; }
+        .timer-warning { color: #ff0000; animation: blink 0.4s infinite; }
         @keyframes blink { 50% { opacity: 0.2; } }
     </style>
 </head>
 <body>
 
-<header>
-    <h1>🧠 BRAIN SPEED: REDLINE</h1>
+<header id="main-header">
+    <h1 id="title-text">🧠 BRAIN SPEED: REDLINE</h1>
     <div class="nav-buttons">
         <button onclick="gameManager.switchGame('math')">MATH</button>
         <button onclick="gameManager.switchGame('grammar')">GRAMMAR</button>
@@ -146,7 +163,7 @@
 <div id="game-container">
     <div id="overlay">
         <h2 id="overlay-title">READY?</h2>
-        <p id="overlay-msg">Anti-overlap system engaged.</p>
+        <p id="overlay-msg">Choose your training module.</p>
         <button id="start-btn" class="hidden" onclick="gameManager.startGame()">START</button>
         <button id="reset-btn" class="hidden" style="color: grey; font-size: 0.7rem; margin-top: 20px;" onclick="gameManager.resetCurrentGameProgress()">Reset Progress</button>
     </div>
@@ -169,6 +186,7 @@ class GameManager {
         this.timerInterval = null;
         this.timeLeft = 30;
         this.mathTypeCounter = 0;
+        this.combo = 0;
         this.audioCtx = null;
 
         this.container = document.getElementById('game-container');
@@ -176,10 +194,9 @@ class GameManager {
         this.overlay = document.getElementById('overlay');
         this.startBtn = document.getElementById('start-btn');
         
-        this.quotes = ["Keep pushing!", "Try again!", "Focus!", "Speed up!", "Don't quit!"];
+        this.quotes = ["Focus!", "Go again!", "Stay sharp!", "You've got this!", "Push forward!"];
     }
 
-    // Sound Generator
     playTick(freq = 440, duration = 0.05) {
         if (!this.audioCtx) this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         const osc = this.audioCtx.createOscillator();
@@ -193,15 +210,33 @@ class GameManager {
         osc.stop(this.audioCtx.currentTime + duration);
     }
 
-    saveProgress() { localStorage.setItem(`redline_save_${this.currentGameType}`, this.level); }
-    loadProgress(type) { return parseInt(localStorage.getItem(`redline_save_${type}`)) || 1; }
+    saveProgress() { localStorage.setItem(`redline_pro_save_${this.currentGameType}`, this.level); }
+    loadProgress(type) { return parseInt(localStorage.getItem(`redline_pro_save_${type}`)) || 1; }
 
     resetCurrentGameProgress() {
-        if(confirm("Reset Level?")) { this.level = 1; this.saveProgress(); this.switchGame(this.currentGameType); }
+        if(confirm("Reset progress?")) { this.level = 1; this.saveProgress(); this.switchGame(this.currentGameType); }
+    }
+
+    updateTheme() {
+        let color = "#e74c3c"; // Red
+        let title = "REDLINE";
+        
+        if (this.level > 10) {
+            color = "#9b59b6"; // Purple
+            title = "THE VOID";
+        } else if (this.level > 5) {
+            color = "#2ecc71"; // Green
+            title = "MATRIX";
+        }
+
+        document.documentElement.style.setProperty('--accent', color);
+        document.getElementById('title-text').innerText = `🧠 BRAIN SPEED: ${title}`;
+        document.getElementById('main-header').style.background = color + "44";
+        document.getElementById('level-display').innerText = this.level;
     }
 
     updateHUD() {
-        document.getElementById('level-display').innerText = this.level;
+        this.updateTheme();
         document.getElementById('timer-box').className = (this.currentGameType === 'dots') ? "" : "hidden";
     }
 
@@ -212,12 +247,15 @@ class GameManager {
         this.overlay.classList.remove('hidden');
         this.startBtn.classList.remove('hidden');
         document.getElementById('reset-btn').classList.remove('hidden');
-        document.getElementById('overlay-title').innerText = `${type.toUpperCase()} - LEVEL ${this.level}`;
+        document.getElementById('overlay-title').innerText = `${type.toUpperCase()} - LVL ${this.level}`;
+        document.getElementById('overlay-msg').innerText = "Sudden Death Active.";
         document.getElementById('input-area').style.display = (type === 'dots') ? 'none' : 'block';
     }
 
     startGame() {
         this.isPlaying = true;
+        this.combo = 0;
+        this.input.classList.remove('combo-glow');
         this.overlay.classList.add('hidden');
         this.input.value = '';
         this.input.focus();
@@ -243,9 +281,11 @@ class GameManager {
             
             if(this.timeLeft <= 5 && this.timeLeft > 0) {
                 document.getElementById('timer-display').className = "timer-warning";
-                this.playTick(880, 0.1); // High pitch tick
+                this.container.classList.add('shake');
+                this.playTick(880, 0.1);
             } else {
                 document.getElementById('timer-display').className = "";
+                this.container.classList.remove('shake');
             }
             
             if(this.timeLeft <= 0) this.stopGame('gameover');
@@ -254,13 +294,14 @@ class GameManager {
 
     stopGame(reason) {
         this.isPlaying = false;
+        this.container.classList.remove('shake');
         clearInterval(this.spawnInterval);
         clearInterval(this.timerInterval);
         cancelAnimationFrame(this.gameLoopId);
         this.overlay.classList.remove('hidden');
         
         if(reason === 'gameover') {
-            this.playTick(150, 0.5); // Low fail sound
+            this.playTick(100, 0.6);
             document.getElementById('overlay-title').innerText = "GAME OVER";
             document.getElementById('overlay-msg').innerText = this.quotes[Math.floor(Math.random()*this.quotes.length)];
             this.startBtn.innerText = "RESTART";
@@ -309,8 +350,12 @@ class GameManager {
             this.activeEntities[matchIndex].el.remove();
             this.activeEntities.splice(matchIndex, 1);
             this.questionsAnsweredInLevel++;
+            this.combo++;
             this.input.value = '';
-            this.playTick(600, 0.03); // Pop sound
+            
+            if(this.combo >= 3) this.input.classList.add('combo-glow');
+            this.playTick(600 + (this.combo * 50), 0.05);
+
             if(this.questionsAnsweredInLevel >= 10) this.stopGame('levelup');
         }
     }
@@ -328,7 +373,7 @@ class GameManager {
     }
 
     generateGrammar() {
-        const bank = [{q:"Fast (opp.)", a:"slow"}, {q:"Go (past)", a:"went"}, {q:"Red+Blue=", a:"purple"}];
+        const bank = [{q:"Antonym: Fast", a:"slow"}, {q:"Past: Eat", a:"ate"}, {q:"Sky color", a:"blue"}, {q:"12 months =", a:"year"}];
         return bank[Math.floor(Math.random() * bank.length)];
     }
 
@@ -336,7 +381,7 @@ class GameManager {
         let current = 1;
         const dotList = [];
         const total = 5 + Math.floor(this.level / 2);
-        const padding = 75; // Increased padding to prevent any touching
+        const padding = 80;
 
         for(let i=1; i<=total; i++) {
             let x, y, overlap;
@@ -358,7 +403,7 @@ class GameManager {
             dotList.push({x, y});
             dot.onclick = () => {
                 if(parseInt(dot.innerText) === current) {
-                    this.playTick(1000, 0.05);
+                    this.playTick(1000 + (current * 50), 0.05);
                     dot.remove(); current++;
                     if(current > total) this.stopGame('levelup');
                 } else { this.stopGame('gameover'); }
