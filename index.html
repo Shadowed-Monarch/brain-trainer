@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Brain Train: Redline Final</title>
+    <title>Brain Train</title>
     <style>
         :root {
             --primary: #000000;
@@ -129,7 +129,7 @@
 <body>
 
 <header>
-    <h1 style="margin:0; font-size: 1rem;">🧠 BRAIN SPEED</h1>
+    <h1 style="margin:0; font-size: 1rem;">🧠BRAIN SPEED: Danger Zone</h1>
     <div class="nav-buttons">
         <button onclick="gameManager.switchGame('math')">MATH</button>
         <button onclick="gameManager.switchGame('grammar')">GRAMMAR</button>
@@ -253,12 +253,10 @@ class GameManager {
         el.className = 'question-bubble';
         el.innerText = qData.q;
         
-        // Spawn lower to avoid the header area on phones
         const lanes = this.isMobile ? [80, 150, 220] : [70, 150, 230, 310];
         el.style.top = lanes[Math.floor(Math.random() * lanes.length)] + 'px';
         this.container.appendChild(el);
         
-        // SLOWED DOWN: Mobile now starts at 0.3 speed instead of 0.7
         let baseSpeed = this.isMobile ? 0.35 : 0.7;
         let speed = baseSpeed + (this.level * 0.04);
         this.activeEntities.push({ el, x: -280, speed, answer: qData.a });
