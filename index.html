@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BrainSpeed Trainer - Fixed Levels</title>
+    <title>BrainSpeed - Sudden Death Mode</title>
     <style>
         :root {
             --primary: #2c3e50;
@@ -50,11 +50,10 @@
 
         #hud {
             display: flex;
-            justify-content: space-between;
+            justify-content: center;
             width: 80%;
-            max-width: 800px;
             margin: 10px 0;
-            font-size: 1.2rem;
+            font-size: 1.5rem;
             font-weight: bold;
             color: var(--primary);
         }
@@ -80,7 +79,6 @@
             border-radius: 30px;
             font-size: 1.5rem;
             font-weight: bold;
-            box-shadow: 2px 4px 10px rgba(0,0,0,0.1);
         }
 
         #input-area { margin-top: 20px; display: none; }
@@ -122,6 +120,7 @@
             justify-content: center;
             font-weight: bold;
             cursor: pointer;
+            font-size: 1.3rem;
         }
     </style>
 </head>
@@ -138,13 +137,12 @@
 
 <div id="hud">
     <span>Level: <span id="level-display">1</span></span>
-    <span>Lives: <span id="lives-display">5</span></span>
 </div>
 
 <div id="game-container">
     <div id="overlay">
         <h2 id="overlay-title">Ready?</h2>
-        <p id="overlay-msg">Select a game to begin.</p>
+        <p id="overlay-msg">Don't let a single bubble escape!</p>
         <button class="btn-game hidden" id="start-btn" onclick="gameManager.startGame()">Start Level</button>
         <button class="btn-reset hidden" id="reset-btn" onclick="gameManager.resetCurrentGameProgress()">Reset Progress</button>
     </div>
@@ -158,7 +156,6 @@
 class GameManager {
     constructor() {
         this.level = 1;
-        this.lives = 5;
         this.currentGameType = null;
         this.isPlaying = false;
         this.questionsAnsweredInLevel = 0;
@@ -191,18 +188,17 @@ class GameManager {
 
     updateHUD() {
         document.getElementById('level-display').innerText = this.level;
-        document.getElementById('lives-display').innerText = this.lives;
     }
 
     switchGame(type) {
         this.currentGameType = type;
         this.level = this.loadProgress(type);
-        this.lives = 5;
-        this.updateHUD(); // Show correct level when switching
+        this.updateHUD();
         this.overlay.classList.remove('hidden');
         this.startBtn.classList.remove('hidden');
         document.getElementById('reset-btn').classList.remove('hidden');
         document.getElementById('overlay-title').innerText = `${type.toUpperCase()} - Level ${this.level}`;
+        document.getElementById('overlay-msg').innerText = "Miss one and it's Game Over!";
         document.getElementById('input-area').style.display = (type === 'dots') ? 'none' : 'block';
     }
 
@@ -228,13 +224,13 @@ class GameManager {
         
         if(reason === 'gameover') {
             document.getElementById('overlay-title').innerText = "Game Over!";
-            this.lives = 5;
-            this.updateHUD();
+            document.getElementById('overlay-msg').innerText = "A bubble escaped! Try again.";
+            this.startBtn.innerText = `Restart Level ${this.level}`;
         } else {
-            // Level was already increased in checkInput/dotClick
             this.saveProgress();
             this.updateHUD(); 
             document.getElementById('overlay-title').innerText = "Level Complete!";
+            document.getElementById('overlay-msg').innerText = "Excellent speed!";
             this.startBtn.innerText = `Start Level ${this.level}`;
         }
     }
@@ -260,7 +256,7 @@ class GameManager {
         this.activeEntities.push({
             el: el,
             x: -180,
-            speed: 0.60 + (this.level * 0.05), // Even slower speed
+            speed: 0.60 + (this.level * 0.05),
             answer: content.answer.toString().toLowerCase()
         });
     }
@@ -270,12 +266,11 @@ class GameManager {
             let entity = this.activeEntities[i];
             entity.x += entity.speed;
             entity.el.style.left = entity.x + 'px';
+            
+            // IF BUBBLE REACHES RIGHT SIDE:
             if (entity.x > this.container.clientWidth) {
-                entity.el.remove();
-                this.activeEntities.splice(i, 1);
-                this.lives--;
-                this.updateHUD();
-                if(this.lives <= 0) this.stopGame('gameover');
+                this.stopGame('gameover');
+                return; // Stop checking others
             }
         }
     }
@@ -289,8 +284,7 @@ class GameManager {
             this.input.value = '';
             
             if(this.questionsAnsweredInLevel >= 10) { 
-                this.level++; // Increase level
-                this.updateHUD(); // UPDATE SCREEN INSTANTLY
+                this.level++;
                 this.stopGame('levelup'); 
             }
         }
@@ -346,10 +340,11 @@ class GameManager {
                     dot.remove(); current++;
                     if(current > total) { 
                         this.level++; 
-                        this.updateHUD(); // UPDATE SCREEN INSTANTLY
                         this.stopGame('levelup'); 
                     }
-                } else { this.lives--; this.updateHUD(); if(this.lives <= 0) this.stopGame('gameover'); }
+                } else { 
+                    this.stopGame('gameover'); // Wrong dot = Instant Game Over
+                }
             };
             this.container.appendChild(dot);
         }
