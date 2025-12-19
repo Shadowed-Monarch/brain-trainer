@@ -13,6 +13,8 @@
             --gold: #f1c40f;
         }
 
+        * { box-sizing: border-box; }
+
         body {
             font-family: 'Segoe UI', Arial, sans-serif;
             background-color: var(--primary);
@@ -20,18 +22,18 @@
             margin: 0;
             display: flex;
             flex-direction: column;
-            align-items: center;
             height: 100vh;
+            width: 100vw;
             overflow: hidden;
-            transition: background 0.5s ease;
         }
 
         header {
             width: 100%;
             background: rgba(142, 0, 0, 0.5);
-            padding: 0.8rem;
+            padding: 10px;
             text-align: center;
             border-bottom: 4px solid var(--accent);
+            flex-shrink: 0;
         }
 
         .user-controls {
@@ -54,13 +56,12 @@
             cursor: pointer;
             border-radius: 3px;
         }
-        .switch-btn:hover { color: white; border-color: white; }
 
-        .nav-buttons { margin-top: 10px; }
+        .nav-buttons { margin-top: 5px; }
 
         button {
-            padding: 10px 20px;
-            margin: 0 5px;
+            padding: 8px 15px;
+            margin: 2px;
             border: 2px solid var(--accent);
             border-radius: 5px;
             cursor: pointer;
@@ -76,7 +77,7 @@
             font-size: 0.8rem;
             display: flex;
             justify-content: center;
-            gap: 20px;
+            gap: 15px;
             margin-top: 5px;
             color: #aaa;
         }
@@ -86,24 +87,26 @@
         #hud {
             display: flex;
             justify-content: space-around;
-            width: 80%;
-            margin: 15px 0;
-            font-size: 1.5rem;
+            width: 100%;
+            padding: 10px;
+            font-size: 1.2rem;
             color: var(--accent);
+            background: rgba(0,0,0,0.3);
         }
 
         #game-container {
             position: relative;
-            width: 95%;
-            max-width: 850px;
-            height: 450px;
+            flex-grow: 1;
+            width: 98%;
+            margin: 0 auto 10px auto;
             background: var(--panel);
             border: 3px solid var(--accent);
             border-radius: 10px;
             overflow: hidden;
         }
 
-        #overlay, #name-overlay {
+        /* OVERLAYS */
+        .full-overlay {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0, 0, 0, 0.95);
@@ -113,15 +116,36 @@
             justify-content: center;
             z-index: 100;
             text-align: center;
+            padding: 30px;
         }
+
+        .tutorial-box {
+            background: #222;
+            border: 1px solid var(--accent);
+            padding: 20px;
+            border-radius: 10px;
+            max-width: 500px;
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .tutorial-box b { color: var(--accent); }
 
         .hidden { display: none !important; }
 
-        #input-area { margin-top: 20px; display: none; }
+        #input-area { 
+            width: 100%;
+            padding: 10px;
+            display: none;
+            text-align: center;
+            flex-shrink: 0;
+        }
+        
         input {
-            padding: 15px;
-            font-size: 1.5rem;
-            width: 300px;
+            padding: 12px;
+            font-size: 1.2rem;
+            width: 80%;
+            max-width: 400px;
             text-align: center;
             background: #222;
             color: var(--accent);
@@ -130,16 +154,14 @@
             outline: none;
         }
 
-        #nickname-input { border-color: var(--gold); color: var(--gold); margin-bottom: 20px; }
-
+        /* GAME OBJECTS */
         .question-bubble {
             position: absolute;
-            left: -220px;
             background: var(--accent);
             color: white;
-            padding: 12px 25px;
+            padding: 10px 20px;
             border-radius: 30px;
-            font-size: 1.3rem;
+            font-size: 1.2rem;
             font-weight: bold;
             box-shadow: 0 0 15px var(--accent);
             white-space: nowrap;
@@ -147,7 +169,8 @@
 
         .dot {
             position: absolute;
-            width: 60px; height: 60px;
+            width: 65px; 
+            height: 65px;
             background: var(--accent);
             color: white;
             border-radius: 50%;
@@ -156,14 +179,13 @@
             justify-content: center;
             font-weight: bold;
             cursor: pointer;
-            border: 2px solid white;
-            font-size: 1.4rem;
+            border: 3px solid white;
+            font-size: 1.5rem;
+            user-select: none;
         }
 
-        .shake { animation: shake 0.2s infinite; }
-        @keyframes shake { 0%, 100% { transform: translate(0,0); } 25% { transform: translate(-2px, -2px); } 75% { transform: translate(2px, 2px); } }
-        @keyframes blink { 50% { opacity: 0; } }
         .new-best-text { color: var(--gold); animation: blink 0.5s infinite; margin-bottom: 10px; }
+        @keyframes blink { 50% { opacity: 0; } }
     </style>
 </head>
 <body>
@@ -173,7 +195,7 @@
         <span>PLAYER: <span id="display-nickname">---</span></span>
         <button class="switch-btn" onclick="gameManager.logout()">SWITCH PLAYER</button>
     </div>
-    <h1 id="title-text" style="margin:0;">🧠 BrainSpeed</h1>
+    <h1 id="title-text" style="margin:0; font-size: 1.5rem;">🧠 BrainSpeed</h1>
     <div id="high-scores">
         <span>🏆 MATH: <span id="best-math" class="score-val">1</span></span>
         <span>🏆 GRAMMAR: <span id="best-grammar" class="score-val">1</span></span>
@@ -187,29 +209,35 @@
 </header>
 
 <div id="hud">
-    <span>LEVEL: <span id="level-display">1</span></span>
+    <span>LVL: <span id="level-display">1</span></span>
     <span id="timer-box" class="hidden">TIME: <span id="timer-display">30</span>s</span>
 </div>
 
 <div id="game-container">
-    <div id="name-overlay">
-        <h2 style="color: var(--gold);">WELCOME TO BrainSpeed</h2>
-        <p>Enter nickname to load your progress:</p>
-        <input type="text" id="nickname-input" placeholder="NICKNAME..." maxlength="12">
-        <button onclick="gameManager.setNickname()" style="border-color: var(--gold); color: var(--gold);">ENTER</button>
+    <div id="name-overlay" class="full-overlay">
+        <h2 style="color: var(--gold);">PROFILE REQUIRED</h2>
+        <input type="text" id="nickname-input" placeholder="Enter Nickname..." maxlength="12">
+        <button onclick="gameManager.setNickname()" style="border-color: var(--gold); color: var(--gold); margin-top:15px;">LOGIN</button>
     </div>
 
-    <div id="overlay" class="hidden">
+    <div id="tutorial-overlay" class="full-overlay hidden">
+        <h2 style="color: var(--accent);">HOW TO PLAY</h2>
+        <div class="tutorial-box">
+            <p>1. <b>MATH / GRAMMAR:</b> Solve problems as they scroll. Type the answer and hit enter (or it will auto-check). Don't let them hit the right wall!</p>
+            <p>2. <b>DOTS:</b> Click the numbers in order (1, 2, 3...) before time runs out. <b>Overlapping is now disabled</b> for better visibility.</p>
+        </div>
+        <button onclick="gameManager.closeTutorial()">GOT IT!</button>
+    </div>
+
+    <div id="overlay" class="full-overlay hidden">
         <div id="best-alert" class="new-best-text hidden">NEW BEST! 🏆</div>
         <h2 id="overlay-title">READY?</h2>
-        <p id="overlay-msg">Select a training module.</p>
         <button id="start-btn" onclick="gameManager.startGame()">START</button>
-        <button id="reset-btn" style="color: grey; font-size: 0.7rem; margin-top: 20px; border:none;" onclick="gameManager.resetCurrentGameProgress()">Reset Progress</button>
     </div>
 </div>
 
 <div id="input-area">
-    <input type="text" id="player-input" placeholder="TYPE ANSWER..." autocomplete="off">
+    <input type="text" id="player-input" placeholder="Type answer..." autocomplete="off">
 </div>
 
 <script>
@@ -219,28 +247,36 @@ class GameManager {
         this.level = 1;
         this.currentGameType = null;
         this.isPlaying = false;
-        this.questionsAnsweredInLevel = 0;
         this.activeEntities = []; 
         this.mathTypeCounter = 0;
+        this.container = document.getElementById('game-container');
 
-        if (this.nickname) {
-            this.initUser();
-        }
+        if (this.nickname) this.initUser();
     }
 
     initUser() {
         document.getElementById('name-overlay').classList.add('hidden');
-        document.getElementById('display-nickname').innerText = this.nickname;
+        document.getElementById('display-nickname').innerText = this.nickname.toUpperCase();
         this.refreshHighScores();
+        
+        // Show tutorial only once per user
+        if (!localStorage.getItem(`bs_tut_${this.nickname}`)) {
+            document.getElementById('tutorial-overlay').classList.remove('hidden');
+        }
     }
 
     setNickname() {
-        const input = document.getElementById('nickname-input').value.trim().toLowerCase();
-        if (input.length >= 2) {
-            this.nickname = input;
-            localStorage.setItem('bs_active_user', input);
+        const val = document.getElementById('nickname-input').value.trim();
+        if (val.length >= 2) {
+            this.nickname = val.toLowerCase();
+            localStorage.setItem('bs_active_user', this.nickname);
             this.initUser();
         }
+    }
+
+    closeTutorial() {
+        localStorage.setItem(`bs_tut_${this.nickname}`, "seen");
+        document.getElementById('tutorial-overlay').classList.add('hidden');
     }
 
     logout() {
@@ -259,10 +295,6 @@ class GameManager {
         this.refreshHighScores();
     }
 
-    loadProgress(type) { 
-        return parseInt(localStorage.getItem(`bs_${this.nickname}_curr_${type}`)) || 1; 
-    }
-
     refreshHighScores() {
         ['math', 'grammar', 'dots'].forEach(type => {
             let val = localStorage.getItem(`bs_${this.nickname}_best_${type}`) || 1;
@@ -272,12 +304,16 @@ class GameManager {
         });
     }
 
-    resetCurrentGameProgress() {
-        if(confirm("Reset progress for " + this.currentGameType + "?")) {
-            this.level = 1; 
-            localStorage.setItem(`bs_${this.nickname}_curr_${this.currentGameType}`, 1);
-            this.switchGame(this.currentGameType); 
-        }
+    switchGame(type) {
+        if (!this.nickname) return;
+        this.currentGameType = type;
+        this.level = parseInt(localStorage.getItem(`bs_${this.nickname}_curr_${type}`)) || 1;
+        this.updateTheme();
+        document.getElementById('best-alert').classList.add('hidden');
+        document.getElementById('overlay').classList.remove('hidden');
+        document.getElementById('overlay-title').innerText = `${type.toUpperCase()} - LEVEL ${this.level}`;
+        document.getElementById('input-area').style.display = (type === 'dots') ? 'none' : 'block';
+        document.getElementById('timer-box').className = (type === 'dots') ? "" : "hidden";
     }
 
     updateTheme() {
@@ -285,37 +321,21 @@ class GameManager {
         if (this.level > 10) color = "#9b59b6";
         else if (this.level > 5) color = "#2ecc71";
         document.documentElement.style.setProperty('--accent', color);
-        document.getElementById('main-header').style.background = color + "44";
         document.getElementById('level-display').innerText = this.level;
-    }
-
-    switchGame(type) {
-        if (!this.nickname) return;
-        this.currentGameType = type;
-        this.level = this.loadProgress(type);
-        this.updateTheme();
-        document.getElementById('best-alert').classList.add('hidden');
-        document.getElementById('overlay').classList.remove('hidden');
-        document.getElementById('overlay-title').innerText = `${type.toUpperCase()} - LVL ${this.level}`;
-        document.getElementById('input-area').style.display = (type === 'dots') ? 'none' : 'block';
-        document.getElementById('timer-box').className = (type === 'dots') ? "" : "hidden";
     }
 
     startGame() {
         this.isPlaying = true;
         document.getElementById('overlay').classList.add('hidden');
-        const playerInput = document.getElementById('player-input');
-        playerInput.value = '';
-        playerInput.focus();
+        document.getElementById('player-input').value = '';
+        document.getElementById('player-input').focus();
         this.activeEntities = [];
         this.questionsAnsweredInLevel = 0;
         
-        const container = document.getElementById('game-container');
-        const ov1 = document.getElementById('name-overlay');
-        const ov2 = document.getElementById('overlay');
-        container.innerHTML = '';
-        container.appendChild(ov1);
-        container.appendChild(ov2);
+        // Clear board but keep overlays
+        const overlays = Array.from(this.container.children).filter(c => c.classList.contains('full-overlay'));
+        this.container.innerHTML = '';
+        overlays.forEach(o => this.container.appendChild(o));
 
         if (this.currentGameType === 'dots') {
             this.timeLeft = 30;
@@ -331,11 +351,6 @@ class GameManager {
         this.timerInterval = setInterval(() => {
             this.timeLeft--;
             document.getElementById('timer-display').innerText = this.timeLeft;
-            if(this.timeLeft <= 5 && this.timeLeft > 0) {
-                document.getElementById('game-container').classList.add('shake');
-            } else {
-                document.getElementById('game-container').classList.remove('shake');
-            }
             if(this.timeLeft <= 0) this.stopGame('gameover');
         }, 1000);
     }
@@ -362,44 +377,52 @@ class GameManager {
     startScrollingGame() {
         const loop = () => { if(this.isPlaying) { this.updatePositions(); this.gameLoopId = requestAnimationFrame(loop); } };
         this.gameLoopId = requestAnimationFrame(loop);
-        let spawnRate = Math.max(1000, 3500 - (this.level * 100)); 
-        this.spawnInterval = setInterval(() => this.spawnQuestion(), spawnRate);
+        let rate = Math.max(800, 3000 - (this.level * 150)); 
+        this.spawnInterval = setInterval(() => this.spawnQuestion(), rate);
     }
 
     spawnQuestion() {
         if(!this.isPlaying || (this.questionsAnsweredInLevel + this.activeEntities.length >= 10)) return;
-        let qText, aText;
+        let q, a;
         if(this.currentGameType === 'grammar') {
-            let bank = [{q:"Happy (opp.)", a:"sad"}, {q:"Go (past)", a:"went"}, {q:"Color: Grass", a:"green"}, {q:"Fast (opp.)", a:"slow"}];
+            let bank = [{q:"Cold (opp.)", a:"hot"}, {q:"Eat (past)", a:"ate"}, {q:"Color: Sun", a:"yellow"}, {q:"Up (opp.)", a:"down"}];
             let item = bank[Math.floor(Math.random() * bank.length)];
-            qText = item.q; aText = item.a;
+            q = item.q; a = item.a;
         } else {
-            let a = Math.floor(Math.random() * (5 + this.level)) + 1;
-            let b = Math.floor(Math.random() * (5 + this.level)) + 1;
-            qText = `${a} + ${b}`; aText = (a + b).toString();
+            let m = this.generateMath(); q = m.q; a = m.a;
         }
         const el = document.createElement('div');
         el.className = 'question-bubble';
-        el.innerText = qText;
-        el.style.top = (60 + Math.random() * 300) + 'px';
-        document.getElementById('game-container').appendChild(el);
-        this.activeEntities.push({ el, x: -220, speed: 0.8 + (this.level * 0.08), answer: aText });
+        el.innerText = q;
+        el.style.top = (20 + Math.random() * (this.container.clientHeight - 60)) + 'px';
+        this.container.appendChild(el);
+        this.activeEntities.push({ el, x: -250, speed: 1.2 + (this.level * 0.1), answer: a.toString() });
+    }
+
+    generateMath() {
+        let a, b, q, ans, type = this.mathTypeCounter++ % 4;
+        let m = 5 + this.level;
+        if(type === 0) { a=rand(m); b=rand(m); q=`${a}+${b}`; ans=a+b; }
+        else if(type === 1) { ans=rand(m); b=rand(m); a=ans+b; q=`${a}-${b}`; }
+        else if(type === 2) { a=rand(8); b=rand(5); q=`${a}×${b}`; ans=a*b; }
+        else { ans=rand(5); b=rand(5)+1; a=ans*b; q=`${a}÷${b}`; }
+        return {q, a:ans};
     }
 
     updatePositions() {
         for (let i = this.activeEntities.length - 1; i >= 0; i--) {
-            let entity = this.activeEntities[i];
-            entity.x += entity.speed;
-            entity.el.style.left = entity.x + 'px';
-            if (entity.x > 850) { this.stopGame('gameover'); return; }
+            let e = this.activeEntities[i];
+            e.x += e.speed;
+            e.el.style.left = e.x + 'px';
+            if (e.x > this.container.clientWidth) { this.stopGame('gameover'); return; }
         }
     }
 
     checkInput(val) {
-        const matchIndex = this.activeEntities.findIndex(e => e.answer === val.toLowerCase().trim());
-        if (matchIndex !== -1) {
-            this.activeEntities[matchIndex].el.remove();
-            this.activeEntities.splice(matchIndex, 1);
+        const idx = this.activeEntities.findIndex(e => e.answer === val.toLowerCase().trim());
+        if (idx !== -1) {
+            this.activeEntities[idx].el.remove();
+            this.activeEntities.splice(idx, 1);
             this.questionsAnsweredInLevel++;
             document.getElementById('player-input').value = '';
             if(this.questionsAnsweredInLevel >= 10) this.stopGame('levelup');
@@ -408,22 +431,38 @@ class GameManager {
 
     startDotGame() {
         let current = 1;
-        const total = 5 + Math.floor(this.level / 2);
+        const total = 5 + Math.floor(this.level / 1.5);
+        const dots = [];
+        const minBuffer = 85; 
+
         for(let i=1; i<=total; i++) {
+            let x, y, overlap, tries = 0;
+            do {
+                overlap = false;
+                x = 20 + Math.random() * (this.container.clientWidth - 100);
+                y = 20 + Math.random() * (this.container.clientHeight - 100);
+                for(let d of dots) {
+                    if(Math.hypot(x - d.x, y - d.y) < minBuffer) { overlap = true; break; }
+                }
+                tries++;
+            } while(overlap && tries < 300);
+
             const dot = document.createElement('div');
             dot.className = 'dot'; dot.innerText = i;
-            dot.style.left = (Math.random() * 750) + 'px';
-            dot.style.top = (Math.random() * 350) + 'px';
+            dot.style.left = x + 'px'; dot.style.top = y + 'px';
+            dots.push({x, y});
             dot.onclick = () => {
                 if(parseInt(dot.innerText) === current) {
                     dot.remove(); current++;
                     if(current > total) this.stopGame('levelup');
                 } else { this.stopGame('gameover'); }
             };
-            document.getElementById('game-container').appendChild(dot);
+            this.container.appendChild(dot);
         }
     }
 }
+
+function rand(n) { return Math.floor(Math.random() * n) + 1; }
 const gameManager = new GameManager();
 document.getElementById('player-input').addEventListener('input', (e) => gameManager.checkInput(e.target.value));
 </script>
