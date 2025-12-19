@@ -199,7 +199,7 @@ class GameManager {
         document.getElementById('input-area').style.display = (type === 'dots') ? 'none' : 'block';
     }
 
-    updateHUD() {
+updateHUD() {
         document.getElementById('level-display').innerText = this.level;
         document.getElementById('lives-display').innerText = this.lives;
     }
@@ -219,17 +219,22 @@ class GameManager {
         else this.startScrollingGame();
     }
 
-    stopGame(reason) {
+stopGame(reason) {
         this.isPlaying = false;
         clearInterval(this.spawnInterval);
         cancelAnimationFrame(this.gameLoopId);
+        
         this.overlay.classList.remove('hidden');
+        
         if(reason === 'gameover') {
             document.getElementById('overlay-title').innerText = "Game Over!";
             this.lives = 5;
+            this.updateHUD(); // Reset lives on screen
         } else {
+            // This part handles the Level Up
             document.getElementById('overlay-title').innerText = "Level Complete!";
             this.saveProgress();
+            this.updateHUD(); // THIS IS THE FIX: updates the level number on screen
             this.startBtn.innerText = `Start Level ${this.level}`;
         }
     }
@@ -353,3 +358,4 @@ document.getElementById('player-input').addEventListener('input', (e) => gameMan
 </script>
 </body>
 </html>
+
