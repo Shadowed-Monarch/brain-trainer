@@ -1,604 +1,103 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Brain Trainer</title>
-    <style>
-        :root {
-            --primary: #000000;
-            --accent: #e74c3c;
-            --text: #ffffff;
-            --panel: #1a1a1a;
-            --gold: #f1c40f;
-        }
-
-        * { box-sizing: border-box; }
-
-        body {
-            font-family: 'Segoe UI', Arial, sans-serif;
-            background-color: var(--primary);
-            color: var(--text);
-            margin: 0;
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-            width: 100vw;
-            overflow: hidden;
-        }
-
-        header {
-            width: 100%;
-            background: rgba(142, 0, 0, 0.5);
-            padding: 10px;
-            text-align: center;
-            border-bottom: 4px solid var(--accent);
-            flex-shrink: 0;
-        }
-
-        .user-controls {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 15px;
-            font-size: 0.9rem;
-            margin-bottom: 5px;
-        }
-
-        #display-nickname { color: var(--gold); font-weight: bold; }
-        
-        .switch-btn {
-            background: transparent;
-            border: 1px solid #555;
-            color: #aaa;
-            padding: 2px 8px;
-            font-size: 0.7rem;
-            cursor: pointer;
-            border-radius: 3px;
-        }
-
-        .nav-buttons { margin-top: 5px; }
-
-        button {
-            padding: 8px 15px;
-            margin: 2px;
-            border: 2px solid var(--accent);
-            border-radius: 5px;
-            cursor: pointer;
-            font-weight: bold;
-            background: var(--primary);
-            color: white;
-            transition: 0.3s;
-        }
-
-        button:hover { background: var(--accent); }
-
-        #high-scores {
-            font-size: 0.8rem;
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-            margin-top: 5px;
-            color: #aaa;
-        }
-        .score-val { color: var(--accent); font-weight: bold; }
-        .gold-glow { color: var(--gold) !important; text-shadow: 0 0 10px var(--gold); }
-
-        #hud {
-            display: flex;
-            justify-content: space-around;
-            width: 100%;
-            padding: 10px;
-            font-size: 1.2rem;
-            color: var(--accent);
-            background: rgba(0,0,0,0.3);
-        }
-
-        #game-container {
-            position: relative;
-            flex-grow: 1;
-            width: 98%;
-            margin: 0 auto 10px auto;
-            background: var(--panel);
-            border: 3px solid var(--accent);
-            border-radius: 10px;
-            overflow: hidden;
-        }
-
-        .full-overlay {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.95);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            z-index: 100;
-            text-align: center;
-            padding: 30px;
-        }
-
-        .tutorial-box {
-            background: #222;
-            border: 1px solid var(--accent);
-            padding: 20px;
-            border-radius: 10px;
-            max-width: 500px;
-            margin-bottom: 20px;
-            text-align: left;
-            font-size: 0.9rem;
-        }
-
-        .hidden { display: none !important; }
-
-        #input-area { 
-            width: 100%;
-            padding: 10px;
-            display: none;
-            text-align: center;
-            flex-shrink: 0;
-        }
-        
-        input {
-            padding: 12px;
-            font-size: 1.2rem;
-            width: 80%;
-            max-width: 400px;
-            text-align: center;
-            background: #222;
-            color: var(--accent);
-            border: 2px solid var(--accent);
-            border-radius: 10px;
-            outline: none;
-        }
-
-        .question-bubble {
-            position: absolute;
-            background: var(--accent);
-            color: white;
-            padding: 10px 20px;
-            border-radius: 30px;
-            font-size: 1.1rem;
-            font-weight: bold;
-            box-shadow: 0 0 15px var(--accent);
-            white-space: nowrap;
-        }
-
-        .dot {
-            position: absolute;
-            width: 65px; 
-            height: 65px;
-            background: var(--accent);
-            color: white;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            cursor: pointer;
-            border: 3px solid white;
-            font-size: 1.5rem;
-            user-select: none;
-        }
-
-        .new-best-text { color: var(--gold); animation: blink 0.5s infinite; margin-bottom: 10px; }
-        @keyframes blink { 50% { opacity: 0; } }
-    </style>
-</head>
-<body>
-
-<header id="main-header">
-    <div class="user-controls">
-        <span>PLAYER: <span id="display-nickname">---</span></span>
-        <button class="switch-btn" onclick="gameManager.logout()">SWITCH PLAYER</button>
-    </div>
-    <h1 id="title-text" style="margin:0; font-size: 1.5rem;">🧠 Brain Speed Thinking Improve</h1>
-    <div id="high-scores">
-        <span>🏆 MATH: <span id="best-math" class="score-val">1</span></span>
-        <span>🏆 GRAMMAR: <span id="best-grammar" class="score-val">1</span></span>
-        <span>🏆 DOTS: <span id="best-dots" class="score-val">1</span></span>
-    </div>
-    <div class="nav-buttons">
-        <button onclick="gameManager.switchGame('math')">MATH</button>
-        <button onclick="gameManager.switchGame('grammar')">GRAMMAR</button>
-        <button onclick="gameManager.switchGame('dots')">DOTS</button>
-    </div>
-</header>
-
-<div id="hud">
-    <span>LVL: <span id="level-display">1</span></span>
-    <span id="timer-box" class="hidden">TIME: <span id="timer-display">30</span>s</span>
-</div>
-
-<div id="game-container">
-    <div id="name-overlay" class="full-overlay">
-        <h2 style="color: var(--gold);">PROFILE REQUIRED</h2>
-        <input type="text" id="nickname-input" placeholder="Enter Nickname..." maxlength="12">
-        <button onclick="gameManager.setNickname()" style="border-color: var(--gold); color: var(--gold); margin-top:15px;">LOGIN</button>
-    </div>
-
-    <div id="tutorial-overlay" class="full-overlay hidden">
-        <h2 style="color: var(--accent);">TUTORIAL</h2>
-        <div class="tutorial-box">
-            <p>• <b>MATH & GRAMMAR:</b> Answers scroll from left to right. Don't let them reach the end! Type the answer to clear them.</p>
-            <p>• <b>DOTS:</b> Click the numbers in order (1, 2, 3...). Overlapping has been disabled.</p>
-        </div>
-        <button onclick="gameManager.closeTutorial()">START PLAYING</button>
-    </div>
-
-    <div id="overlay" class="full-overlay hidden">
-        <div id="best-alert" class="new-best-text hidden">NEW BEST! 🏆</div>
-        <h2 id="overlay-title">READY?</h2>
-        <button id="start-btn" onclick="gameManager.startGame()">START</button>
-    </div>
-</div>
-
-<div id="input-area">
-    <input type="text" id="player-input" placeholder="Type answer..." autocomplete="off">
-</div>
-
-<script>
-class GameManager {
-    constructor() {
-        this.nickname = localStorage.getItem('bs_active_user') || "";
-        this.level = 1;
-        this.currentGameType = null;
-        this.isPlaying = false;
-        this.activeEntities = []; 
-        this.lastQuestionIndex = -1;
-        this.container = document.getElementById('game-container');
-
-        // Extended Grammar Library
-        this.grammarBank = [
-            {q:"Happy (opp.)", a:"sad"}, {q:"Go (past)", a:"went"}, {q:"Color: Grass", a:"green"}, 
-            {q:"Fast (opp.)", a:"slow"}, {q:"Up (opp.)", a:"down"}, {q:"Eat (past)", a:"ate"},
-            {q:"Big (opp.)", a:"small"}, {q:"See (past)", a:"saw"}, {q:"Color: Sky", a:"blue"},
-            {q:"Hot (opp.)", a:"cold"}, {q:"Run (past)", a:"ran"}, {q:"Hard (opp.)", a:"soft"},
-            {q:"Win (opp.)", a:"lose"}, {q:"Color: Fire", a:"red"}, {q:"Buy (past)", a:"bought"},
-            {q:"Rich (opp.)", a:"poor"}, {q:"Do (past)", a:"did"}, {q:"Old (opp.)", a:"new"},
-            {q:"Give (past)", a:"gave"}, {q:"Day (opp.)", a:"night"}, {q:"Color: Snow", a:"white"},{q:"Tall (opp.)", a:"short"}, 
-{q:"Come (past)", a:"came"}, 
-{q:"Color: Sun", a:"yellow"},
-
-{q:"Happy (opp.)", a:"sad"}, 
-{q:"Fly (past)", a:"flew"}, 
-{q:"Color: Leaf", a:"green"},
-
-{q:"Strong (opp.)", a:"weak"}, 
-{q:"Take (past)", a:"took"}, 
-{q:"Color: Ocean", a:"blue"},
-
-{q:"Near (opp.)", a:"far"}, 
-{q:"Speak (past)", a:"spoke"}, 
-{q:"Color: Rose", a:"red"},
-
-{q:"Clean (opp.)", a:"dirty"}, 
-{q:"Write (past)", a:"wrote"}, 
-{q:"Color: Coal", a:"black"},
-
-{q:"Open (opp.)", a:"close"}, 
-{q:"Sing (past)", a:"sang"}, 
-{q:"Color: Milk", a:"white"},
-
-{q:"Early (opp.)", a:"late"}, 
-{q:"Drink (past)", a:"drank"}, 
-{q:"Color: Orange", a:"orange"},
-
-{q:"Full (opp.)", a:"empty"}, 
-{q:"Sleep (past)", a:"slept"}, 
-{q:"Color: Banana", a:"yellow"},
-            {q:"Good (opp.)", a:"bad"},
-{q:"Break (past)", a:"broke"},
-{q:"Color: Apple", a:"red"},
-
-{q:"Light (opp.)", a:"heavy"},
-{q:"Choose (past)", a:"chose"},
-{q:"Color: Lemon", a:"yellow"},
-
-{q:"Empty (opp.)", a:"full"},
-{q:"Begin (past)", a:"began"},
-{q:"Color: Night", a:"black"},
-
-{q:"Noisy (opp.)", a:"quiet"},
-{q:"Catch (past)", a:"caught"},
-{q:"Color: Frog", a:"green"},
-
-{q:"Thin (opp.)", a:"thick"},
-{q:"Think (past)", a:"thought"},
-{q:"Color: Chocolate", a:"brown"},
-
-{q:"Wet (opp.)", a:"dry"},
-{q:"Feel (past)", a:"felt"},
-{q:"Color: Cloud", a:"white"},
-
-{q:"Short (opp.)", a:"long"},
-{q:"Make (past)", a:"made"},
-
-
-{q:"Cheap (opp.)", a:"expensive"},
-{q:"Find (past)", a:"found"},
-{q:"Color: Carrot", a:"orange"},
-
-{q:"Soft (opp.)", a:"hard"},
-{q:"Lose (past)", a:"lost"},
-{q:"Color: Grasshopper", a:"green"},
-
-{q:"Inside (opp.)", a:"outside"},
-{q:"Build (past)", a:"built"},
-{q:"Color: Egg", a:"white"},
-
-{q:"Slow (opp.)", a:"fast"},
-{q:"Hold (past)", a:"held"},
-{q:"Color: Strawberry", a:"red"},
-
-{q:"False (opp.)", a:"true"},
-{q:"Meet (past)", a:"met"},
-{q:"Color: Elephant", a:"gray"},
-
-{q:"Bright (opp.)", a:"dark"},
-{q:"Pay (past)", a:"paid"},
-{q:"Color: Tree trunk", a:"brown"},
-
-{q:"Kind (opp.)", a:"cruel"},
-{q:"Read (past)", a:"read"},
-{q:"Color: Peacock", a:"blue"},
-
-{q:"Sharp (opp.)", a:"dull"},
-{q:"Send (past)", a:"sent"},
-{q:"Color: Pumpkin", a:"orange"},
-
-{q:"Front (opp.)", a:"back"},
-{q:"Teach (past)", a:"taught"},
-{q:"Color: Penguin", a:"black and white"}
-            {q:"The opposite of hot is ___", a:"cold"},
-{q:"I ___ to school yesterday", a:"went"},
-{q:"Color: Grass", a:"green"},
-
-{q:"The opposite of big is ___", a:"small"},
-{q:"She ___ an apple in the morning", a:"ate"},
-{q:"Color: Sky", a:"blue"},
-
-{q:"The opposite of day is ___", a:"night"},
-{q:"He ___ a story last night", a:"read"},
-{q:"Color: Milk", a:"white"},
-
-{q:"The opposite of fast is ___", a:"slow"},
-{q:"They ___ the match yesterday", a:"won"},
-{q:"Color: Fire", a:"red"},
-
-{q:"The opposite of up is ___", a:"down"},
-{q:"We ___ a movie last night", a:"saw"},
-{q:"Color: Snow", a:"white"},
-
-{q:"The opposite of happy is ___", a:"sad"},
-{q:"She ___ her homework yesterday", a:"did"},
-{q:"Color: Banana", a:"yellow"},
-
-{q:"The opposite of hard is ___", a:"soft"},
-{q:"He ___ me a gift yesterday", a:"gave"}
-
-        ];
-
-        if (this.nickname) this.initUser();
-    }
-
-    initUser() {
-        document.getElementById('name-overlay').classList.add('hidden');
-        document.getElementById('display-nickname').innerText = this.nickname.toUpperCase();
-        this.refreshHighScores();
-        if (!localStorage.getItem(`bs_tut_${this.nickname}`)) {
-            document.getElementById('tutorial-overlay').classList.remove('hidden');
-        }
-    }
-
-    setNickname() {
-        const val = document.getElementById('nickname-input').value.trim();
-        if (val.length >= 2) {
-            this.nickname = val.toLowerCase();
-            localStorage.setItem('bs_active_user', this.nickname);
-            this.initUser();
-        }
-    }
-
-    closeTutorial() {
-        localStorage.setItem(`bs_tut_${this.nickname}`, "seen");
-        document.getElementById('tutorial-overlay').classList.add('hidden');
-    }
-
-    logout() {
-        localStorage.removeItem('bs_active_user');
-        location.reload();
-    }
-
-    saveProgress() { 
-        localStorage.setItem(`bs_${this.nickname}_curr_${this.currentGameType}`, this.level);
-        let bestKey = `bs_${this.nickname}_best_${this.currentGameType}`;
-        let best = parseInt(localStorage.getItem(bestKey)) || 1;
-        if(this.level > best) {
-            localStorage.setItem(bestKey, this.level);
-            document.getElementById('best-alert').classList.remove('hidden');
-        }
-        this.refreshHighScores();
-    }
-
-    refreshHighScores() {
-        ['math', 'grammar', 'dots'].forEach(type => {
-            let val = localStorage.getItem(`bs_${this.nickname}_best_${type}`) || 1;
-            const el = document.getElementById(`best-${type}`);
-            el.innerText = val;
-            el.classList.toggle('gold-glow', parseInt(val) >= 10);
-        });
-    }
-
-    switchGame(type) {
-        if (!this.nickname) return;
-        this.currentGameType = type;
-        this.level = parseInt(localStorage.getItem(`bs_${this.nickname}_curr_${type}`)) || 1;
-        this.updateTheme();
-        document.getElementById('best-alert').classList.add('hidden');
-        document.getElementById('overlay').classList.remove('hidden');
-        document.getElementById('overlay-title').innerText = `${type.toUpperCase()} - LVL ${this.level}`;
-        document.getElementById('input-area').style.display = (type === 'dots') ? 'none' : 'block';
-        document.getElementById('timer-box').className = (type === 'dots') ? "" : "hidden";
-    }
-
-    updateTheme() {
-        let color = "#e74c3c"; 
-        if (this.level > 10) color = "#9b59b6";
-        else if (this.level > 5) color = "#2ecc71";
-        document.documentElement.style.setProperty('--accent', color);
-        document.getElementById('level-display').innerText = this.level;
-    }
-
-    startGame() {
-        this.isPlaying = true;
-        document.getElementById('overlay').classList.add('hidden');
-        document.getElementById('player-input').value = '';
-        document.getElementById('player-input').focus();
-        this.activeEntities = [];
-        this.questionsAnsweredInLevel = 0;
-        
-        const overlays = Array.from(this.container.children).filter(c => c.classList.contains('full-overlay'));
-        this.container.innerHTML = '';
-        overlays.forEach(o => this.container.appendChild(o));
-
-        if (this.currentGameType === 'dots') {
-            this.timeLeft = 30;
-            this.startTimer();
-            this.startDotGame();
-        } else {
-            this.startScrollingGame();
-        }
-    }
-
-    startTimer() {
-        clearInterval(this.timerInterval);
-        this.timerInterval = setInterval(() => {
-            this.timeLeft--;
-            document.getElementById('timer-display').innerText = this.timeLeft;
-            if(this.timeLeft <= 0) this.stopGame('gameover');
-        }, 1000);
-    }
-
-    stopGame(reason) {
-        this.isPlaying = false;
-        clearInterval(this.spawnInterval);
-        clearInterval(this.timerInterval);
-        cancelAnimationFrame(this.gameLoopId);
-        document.getElementById('overlay').classList.remove('hidden');
-        
-        if(reason === 'gameover') {
-            document.getElementById('overlay-title').innerText = "GAME OVER";
-            document.getElementById('start-btn').innerText = "RETRY";
-        } else {
-            this.level++;
-            this.saveProgress();
-            this.updateTheme(); 
-            document.getElementById('overlay-title').innerText = "LEVEL CLEAR";
-            document.getElementById('start-btn').innerText = "NEXT LEVEL";
-        }
-    }
-
-    startScrollingGame() {
-        const loop = () => { if(this.isPlaying) { this.updatePositions(); this.gameLoopId = requestAnimationFrame(loop); } };
-        this.gameLoopId = requestAnimationFrame(loop);
-        let rate = Math.max(800, 3200 - (this.level * 150)); 
-        this.spawnInterval = setInterval(() => this.spawnQuestion(), rate);
-    }
-
-    spawnQuestion() {
-        if(!this.isPlaying || (this.questionsAnsweredInLevel + this.activeEntities.length >= 10)) return;
-        let q, a;
-
-        if(this.currentGameType === 'grammar') {
-            let idx;
-            do {
-                idx = Math.floor(Math.random() * this.grammarBank.length);
-            } while (idx === this.lastQuestionIndex); // Don't repeat the same one immediately
-            this.lastQuestionIndex = idx;
-            q = this.grammarBank[idx].q;
-            a = this.grammarBank[idx].a;
-        } else {
-            let m = this.generateMath(); q = m.q; a = m.a;
-        }
-
-        const el = document.createElement('div');
-        el.className = 'question-bubble';
-        el.innerText = q;
-        el.style.top = (20 + Math.random() * (this.container.clientHeight - 60)) + 'px';
-        this.container.appendChild(el);
-        this.activeEntities.push({ el, x: -250, speed: 1.3 + (this.level * 0.12), answer: a.toString() });
-    }
-
-    generateMath() {
-        let a, b, q, ans, type = Math.floor(Math.random() * 4);
-        let m = 5 + this.level;
-        if(type === 0) { a=rand(m); b=rand(m); q=`${a}+${b}`; ans=a+b; }
-        else if(type === 1) { ans=rand(m); b=rand(m); a=ans+b; q=`${a}-${b}`; }
-        else if(type === 2) { a=rand(8); b=rand(5); q=`${a}×${b}`; ans=a*b; }
-        else { ans=rand(5); b=rand(5)+1; a=ans*b; q=`${a}÷${b}`; }
-        return {q, a:ans};
-    }
-
-    updatePositions() {
-        for (let i = this.activeEntities.length - 1; i >= 0; i--) {
-            let e = this.activeEntities[i];
-            e.x += e.speed;
-            e.el.style.left = e.x + 'px';
-            if (e.x > this.container.clientWidth) { this.stopGame('gameover'); return; }
-        }
-    }
-
-    checkInput(val) {
-        const idx = this.activeEntities.findIndex(e => e.answer === val.toLowerCase().trim());
-        if (idx !== -1) {
-            this.activeEntities[idx].el.remove();
-            this.activeEntities.splice(idx, 1);
-            this.questionsAnsweredInLevel++;
-            document.getElementById('player-input').value = '';
-            if(this.questionsAnsweredInLevel >= 10) this.stopGame('levelup');
-        }
-    }
-
-    startDotGame() {
-        let current = 1;
-        const total = 5 + Math.floor(this.level / 1.5);
-        const dots = [];
-        const minBuffer = 90; 
-
-        for(let i=1; i<=total; i++) {
-            let x, y, overlap, tries = 0;
-            do {
-                overlap = false;
-                x = 30 + Math.random() * (this.container.clientWidth - 110);
-                y = 30 + Math.random() * (this.container.clientHeight - 110);
-                for(let d of dots) {
-                    if(Math.hypot(x - d.x, y - d.y) < minBuffer) { overlap = true; break; }
-                }
-                tries++;
-            } while(overlap && tries < 400);
-
-            const dot = document.createElement('div');
-            dot.className = 'dot'; dot.innerText = i;
-            dot.style.left = x + 'px'; dot.style.top = y + 'px';
-            dots.push({x, y});
-            dot.onclick = () => {
-                if(parseInt(dot.innerText) === current) {
-                    dot.remove(); current++;
-                    if(current > total) this.stopGame('levelup');
-                } else { this.stopGame('gameover'); }
-            };
-            this.container.appendChild(dot);
-        }
-    }
-}
-
-function rand(n) { return Math.floor(Math.random() * n) + 1; }
-const gameManager = new GameManager();
-document.getElementById('player-input').addEventListener('input', (e) => gameManager.checkInput(e.target.value));
-</script>
-</body>
-</html>
-
-
-
+<!DOCTYPE html> <html lang="en"> <head> <meta charset="UTF-8"> <meta name="viewport"
+content="width=device-width, initial-scale=1.0"> <title>Brain Trainer</title> <style> :root{ --bg:#000; --
+accent:#e74c3c; --panel:#1a1a1a; --text:#fff; --gold:#f1c40f; } *{box-sizing:border-box;} body{margin:0;fontfamily:Segoe UI,Arial,sans-serif;background:var(--bg);color:var(--text);display:flex;flex-direction:column;minheight:100vh;} header{background:#200;border-bottom:4px solid var(--accent);text-align:center;padding:
+10px;} button{background:#000;border:2px solid var(--accent);color:#fff;padding:8px 14px;margin:
+3px;border-radius:6px;font-weight:bold;cursor:pointer;} button:hover{background:var(--accent)}
+hud{display:flex;justify-content:spacearound;color:var(--accent);padding:6px;font-size:
+1.1rem;flex-wrap:wrap;}
+game{flex:1;margin:8px;border:3px solid var(--
+accent);border-radius:12px;background:var(--
+panel);position:relative;overflow:hidden;}
+.overlay{position:absolute;inset:0;background:rgba(0,0,0,.95);display:flex;flex-direction:column;justifycontent:center;align-items:center;z-index:99;} .hidden{display:none} input{padding:12px;font-size:
+1.2rem;border-radius:10px;border:2px solid var(--accent);background:#111;color:var(--accent);textalign:center;width:80%;max-width:400px;} .bubble{position:absolute;background:var(--
+accent);color:#fff;padding:10px 18px;border-radius:25px;font-weight:bold;white-space:nowrap;} .dot{width:
+60px;height:60px;border-radius:50%;background:var(--accent);color:#fff;display:flex;alignitems:center;justify-content:center;font-size:1.5rem;font-weight:bold;border:3px solid
+#fff;position:absolute;cursor:pointer;}
+1
+statsBox{position:absolute;bottom:10px;left:
+50%;transform:translateX(-50%);background:#111;padding:8px 12px;border-radius:10px;border:2px solid var(--
+accent);font-size:0.9rem;display:flex;gap:10px;}
+leaderboardBox{position:absolute;top:10px;right:
+10px;background:#111;padding:10px;borderradius:10px;border:2px solid var(--accent);maxwidth:200px;max-height:400px;overflow:auto;}
+@media(max-width:600px){.bubble{font-size:1rem;padding:6px 12px;}.dot{width:50px;height:50px;fontsize:1.2rem;}input{width:90%;font-size:1rem;padding:10px;}#hud{font-size:1rem;}} </style> <!-- Firebase
+SDKs --> <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script> <script
+src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script> </head> <body>
+<header> <h2> Brain Speed Trainer Pro</h2> <div> <button onclick="game.switchGame('math')">MATH</
+button> <button onclick="game.switchGame('grammar')">GRAMMAR</button> <button
+onclick="game.switchGame('dots')">DOTS</button> </div> </header> <div id="hud"> <span>LEVEL: <span
+id="lvl">1</span></span> <span id="timer" class="hidden">TIME: <span id="time">30</span></span> </
+div> <div id="game"> <div id="nameBox" class="overlay"> <h3 style="color:var(--gold)">ENTER NAME</h3>
+<input id="nameInput" maxlength="12"> <button onclick="game.setName()">START</button> </div> <div
+id="overlay" class="overlay hidden"> <h2 id="msg">READY?</h2> <button onclick="game.start()">START</
+button> </div> <div id="statsBox" class="hidden"> <span>Avg RT: <span id="statRT">0</span>ms</span>
+<span>Accuracy: <span id="statAcc">0</span>%</span> <span>Streak: <span id="statStreak">0</span></
+span> </div> <div id="leaderboardBox"> <h4 style="margin:0 0 5px 0;"> Top 30</h4> <ul id="leaderList"
+style="padding-left:16px;margin:0;"></ul> </div> </div> <div style="text-align:center;padding:8px"
+id="inputBox"> <input id="answer" placeholder="Type answer"> </div> <script> // Firebase config (replace
+with your own config after creating Firebase project) const firebaseConfig = { apiKey: "YOUR_API_KEY",
+authDomain: "YOUR_PROJECT_ID.firebaseapp.com", databaseURL: "https://YOUR_PROJECT_ID-defaultrtdb.firebaseio.com", projectId: "YOUR_PROJECT_ID", storageBucket: "YOUR_PROJECT_ID.appspot.com",
+messagingSenderId: "SENDER_ID", appId: "APP_ID" }; firebase.initializeApp(firebaseConfig); const
+db=firebase.database();
+const sndCorrect=new Audio("data:audio/
+wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YQgAAAAA"); const
+sndWrong=new Audio("data:audio/
+wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YQgAAAAA"); const
+sndLevel=new Audio("data:audio/
+wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YQgAAAAA");
+2
+class Game{ constructor(){ this.name=localStorage.getItem("bt_name")||""; this.level=1; this.mode=null;
+this.active=[]; this.lastIdx=-1; this.game=document.getElementById("game"); this.stats={totalAnswered:
+0,correct:0,totalTime:0,streak:0}; this.grammar=[ {q:"Happy (opp.)",a:"sad"},{q:"Fast (opp.)",a:"slow"},{q:"Big
+(opp.)",a:"small"}, {q:"Hot (opp.)",a:"cold"},{q:"Color: Sky",a:"blue"},{q:"Color: Grass",a:"green"}, {q:"Go
+(past)",a:"went"},{q:"Eat (past)",a:"ate"},{q:"Run (past)",a:"ran"}, {q:"Read (past)",a:"read"},{q:"I ___ to school
+yesterday",a:"went"},{q:"She ___ an apple",a:"ate"}, {q:"They ___ the match",a:"won"} ]; this.grammar=[...new
+Map(this.grammar.map(o=>[o.q,o])).values()];
+if(this.name)document.getElementById("nameBox").classList.add("hidden"); }
+setName(){ const v=nameInput.value.trim(); if(v.length>1){ this.name=v; localStorage.setItem("bt_name",v);
+nameBox.classList.add("hidden"); } }
+switchGame(m){ this.mode=m; overlay.classList.remove("hidden"); msg.innerText=m.toUpperCase()+" - LVL
+"+this.level; inputBox.style.display=m==="dots"?"none":"block"; timer.classList.toggle("hidden",m!=="dots"); }
+start(){ overlay.classList.add("hidden"); this.clear(); this.active=[]; this.count=0; lvl.innerText=this.level;
+document.getElementById('statsBox').classList.remove('hidden'); if(this.mode==="dots")this.startDots(); else
+this.loop=setInterval(()=>this.spawn(),Math.max(700,2500-this.level*200)); }
+clear(){ clearInterval(this.loop); clearInterval(this.clock);
+this.game.querySelectorAll(".bubble,.dot").forEach(e=>e.remove()); }
+spawn(){ if(this.count>=10)return this.win(); let q,a; if(this.mode==="grammar"){ let
+pool=this.grammar.filter(o=>{ if(this.level<4)return !o.q.includes("___"); if(this.level<7)return !
+o.q.includes("Color"); return true; }); let i; do{i=Math.floor(Math.random()pool.length)}while(i===this.lastIdx);
+this.lastIdx=i;q=pool[i].q;a=pool[i].a; }else{ let x=r(10+this.level),y=r(10);q= ${x}+${y} ;a=(x+y)+""; }
+this.lastSpawnTime=performance.now(); const
+b=document.createElement("div");b.className="bubble";b.innerText=q;
+b.style.top=Math.random()250+"px";this.game.appendChild(b);
+this.active.push({el:b,x:-200,a,time:this.lastSpawnTime}); this.count++; }
+update(){ this.active.forEach(o=>{ o.x+=1+this.level*0.15; o.el.style.left=o.x+"px";
+if(o.x>this.game.clientWidth)this.lose(); }); }
+check(v){ const i=this.active.findIndex(o=>o.a.toLowerCase()===v.toLowerCase().trim()); if(i>-1){ let
+now=performance.now(); sndCorrect.play(); this.active[i].el.remove(); this.stats.totalAnswered++;
+this.stats.correct++; this.stats.totalTime += (now - this.active[i].time); this.stats.streak++; this.active.splice(i,
+1); answer.value=""; this.updateStats(); } }
+updateStats(){ statRT.innerText=this.stats.correct>0?(this.stats.totalTime/this.stats.correct).toFixed(0):0;
+statAcc.innerText=this.stats.totalAnswered>0?((this.stats.correct/this.stats.totalAnswered)*100).toFixed(1):0;
+statStreak.innerText=this.stats.streak; }
+startDots(){ let cur=1; let total=5+Math.floor(this.level/2); this.time=30; time.innerText=this.time;
+this.clock=setInterval(()=>{this.time--;time.innerText=this.time;if(this.time<=0)this.lose();},1000); for(let
+i=1;i<=total;i++){ let d=document.createElement("div");d.className="dot";d.innerText=i;
+3
+d.style.left=Math.random()(this.game.clientWidth-80)+"px"; d.style.top=Math.random()
+(this.game.clientHeight-80)+"px"; d.onclick=()=>{if(i===cur){d.remove();cur++;this.stats.correct+
++;this.stats.totalAnswered++;this.updateStats();if(cur>total)this.win();}
+else{this.stats.streak=0;this.updateStats();this.lose();}}; this.game.appendChild(d); } }
+win(){ sndLevel.play(); this.clear(); this.level++; overlay.classList.remove("hidden"); msg.innerText="LEVEL
+UP!"; this.submitScore(); }
+lose(){ sndWrong.play(); this.clear(); overlay.classList.remove("hidden"); msg.innerText="GAME OVER";
+this.stats.streak=0; this.updateStats(); this.submitScore(); }
+submitScore(){ if(!this.name)return;
+db.ref('leaderboard').push({name:this.name,score:this.level,timestamp:Date.now()});
+this.updateLeaderboard(); }
+updateLeaderboard(){ db.ref('leaderboard').orderByChild('score').limitToLast(30).on('value',snapshot=>{ let
+data=[]; snapshot.forEach(s=>data.push(s.val())); data.sort((a,b)=>b.score-a.score); leaderList.innerHTML='';
+data.forEach(e=>{ let li=document.createElement('li');li.innerText= ${e.name}: $
+{e.score} ;leaderList.appendChild(li); }); }); } } function r(n){return Math.floor(Math.random()*n)+1} const
+game=new Game(); setInterval(()=>game.update(),16);
+answer.addEventListener("input",e=>game.check(e.target.value)); </script> </body> </html>
+4
