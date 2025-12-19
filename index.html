@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BrainSpeed - Pro Edition Fixed</title>
+    <title>Brain Trainer</title>
     <style>
         :root {
             --primary: #000000;
@@ -69,6 +69,7 @@
             overflow: hidden;
         }
 
+        /* EFFECTS */
         .shake { animation: shake 0.2s infinite; }
         @keyframes shake {
             0% { transform: translate(1px, 1px); }
@@ -76,9 +77,16 @@
             100% { transform: translate(1px, 1px); }
         }
 
+        .pulse-correct { animation: pulse 0.3s ease-out; }
+        @keyframes pulse {
+            0% { transform: scale(1); border-color: white; }
+            50% { transform: scale(1.02); border-color: var(--accent); }
+            100% { transform: scale(1); }
+        }
+
         .question-bubble {
             position: absolute;
-            left: -200px;
+            left: -220px;
             background: var(--accent);
             color: white;
             padding: 12px 25px;
@@ -87,6 +95,7 @@
             font-weight: bold;
             box-shadow: 0 0 15px var(--accent);
             white-space: nowrap;
+            z-index: 5;
         }
 
         #input-area { margin-top: 20px; display: none; }
@@ -137,15 +146,12 @@
             border: 2px solid white;
             font-size: 1.4rem;
         }
-
-        .timer-warning { color: #ff0000; animation: blink 0.4s infinite; }
-        @keyframes blink { 50% { opacity: 0.2; } }
     </style>
 </head>
 <body>
 
 <header id="main-header">
-    <h1 id="title-text">🧠 BRAIN SPEED: REDLINE</h1>
+    <h1 id="title-text">🧠 Increase Brain Thinking Seed</h1>
     <div class="nav-buttons">
         <button onclick="gameManager.switchGame('math')">MATH</button>
         <button onclick="gameManager.switchGame('grammar')">GRAMMAR</button>
@@ -161,7 +167,7 @@
 <div id="game-container">
     <div id="overlay">
         <h2 id="overlay-title">READY?</h2>
-        <p id="overlay-msg">Select a training module.</p>
+        <p id="overlay-msg">Choose a mode to begin.</p>
         <button id="start-btn" class="hidden" onclick="gameManager.startGame()">START</button>
         <button id="reset-btn" class="hidden" style="color: grey; font-size: 0.7rem; margin-top: 20px;" onclick="gameManager.resetCurrentGameProgress()">Reset Progress</button>
     </div>
@@ -192,16 +198,13 @@ class GameManager {
         this.overlay = document.getElementById('overlay');
         this.startBtn = document.getElementById('start-btn');
         
-        this.quotes = ["Keep your focus!", "Don't blink!", "Try again!", "Speed is everything!", "Push your limits!"];
+        this.quotes = ["Focus!", "Stay sharp!", "Again!", "Speed up!", "Don't quit!"];
         
-        // Expanded Grammar Bank
         this.grammarBank = [
             {q:"Happy (opp.)", a:"sad"}, {q:"Go (past)", a:"went"}, {q:"Color of grass", a:"green"},
             {q:"Ice (opp.)", a:"fire"}, {q:"Eat (past)", a:"ate"}, {q:"Opposite: In", a:"out"},
-            {q:"Large (opp.)", a:"small"}, {q:"Sun color", a:"yellow"}, {q:"Fast (opp.)", a:"slow"},
-            {q:"He ___ (to be)", a:"is"}, {q:"They ___ (to be)", a:"are"}, {q:"See (past)", a:"saw"},
-            {q:"Hot (opp.)", a:"cold"}, {q:"Up (opp.)", a:"down"}, {q:"Ocean color", a:"blue"},
-            {q:"Buy (past)", a:"bought"}, {q:"Run (past)", a:"ran"}, {q:"Win (opp.)", a:"lose"}
+            {q:"Sun color", a:"yellow"}, {q:"Fast (opp.)", a:"slow"}, {q:"Sea color", a:"blue"},
+            {q:"Hot (opp.)", a:"cold"}, {q:"Up (opp.)", a:"down"}, {q:"Buy (past)", a:"bought"}
         ];
     }
 
@@ -220,11 +223,11 @@ class GameManager {
         } catch(e) {}
     }
 
-    saveProgress() { localStorage.setItem(`redline_pro_v2_${this.currentGameType}`, this.level); }
-    loadProgress(type) { return parseInt(localStorage.getItem(`redline_pro_v2_${type}`)) || 1; }
+    saveProgress() { localStorage.setItem(`rs_pro_v3_${this.currentGameType}`, this.level); }
+    loadProgress(type) { return parseInt(localStorage.getItem(`rs_pro_v3_${type}`)) || 1; }
 
     resetCurrentGameProgress() {
-        if(confirm("Reset Level?")) { this.level = 1; this.saveProgress(); this.switchGame(this.currentGameType); }
+        if(confirm("Reset progress?")) { this.level = 1; this.saveProgress(); this.switchGame(this.currentGameType); }
     }
 
     updateTheme() {
@@ -247,9 +250,10 @@ class GameManager {
         this.startBtn.classList.remove('hidden');
         document.getElementById('reset-btn').classList.remove('hidden');
         document.getElementById('overlay-title').innerText = `${type.toUpperCase()} - LVL ${this.level}`;
-        document.getElementById('overlay-msg').innerText = "Sudden Death. Good luck.";
+        document.getElementById('overlay-msg').innerText = "Sudden Death: Fail once, lose all.";
         document.getElementById('input-area').style.display = (type === 'dots') ? 'none' : 'block';
         document.getElementById('timer-box').className = (type === 'dots') ? "" : "hidden";
+        this.startBtn.innerText = "START";
     }
 
     startGame() {
@@ -313,28 +317,34 @@ class GameManager {
     startScrollingGame() {
         const loop = () => { if(this.isPlaying) { this.updatePositions(); this.gameLoopId = requestAnimationFrame(loop); } };
         this.gameLoopId = requestAnimationFrame(loop);
-        let spawnRate = Math.max(1200, 4000 - (this.level * 110)); 
+        let spawnRate = Math.max(1000, 3500 - (this.level * 100)); 
         this.spawnInterval = setInterval(() => this.spawnQuestion(), spawnRate);
     }
 
     spawnQuestion() {
         if(!this.isPlaying || (this.questionsAnsweredInLevel + this.activeEntities.length >= 10)) return;
         
-        let content;
-        if(this.currentGameType === 'math') {
-            content = this.generateMath();
+        let qText, aText;
+        if(this.currentGameType === 'grammar') {
+            let item = this.grammarBank[Math.floor(Math.random() * this.grammarBank.length)];
+            qText = item.q; aText = item.a;
         } else {
-            content = this.grammarBank[Math.floor(Math.random() * this.grammarBank.length)];
+            let math = this.generateMath();
+            qText = math.text; aText = math.answer;
         }
 
         const el = document.createElement('div');
         el.className = 'question-bubble';
-        el.innerText = content.q || content.text;
-        el.style.top = (50 + Math.random() * (this.container.clientHeight - 120)) + 'px';
-        el.style.left = '-200px';
+        el.innerText = qText;
+        el.style.top = (60 + Math.random() * (this.container.clientHeight - 130)) + 'px';
+        el.style.left = '-220px';
+        
         this.container.appendChild(el);
         this.activeEntities.push({
-            el: el, x: -200, speed: 0.70 + (this.level * 0.06), answer: (content.a || content.answer).toString().toLowerCase()
+            el: el, 
+            x: -220, 
+            speed: 0.75 + (this.level * 0.07), 
+            answer: aText.toString().toLowerCase().trim()
         });
     }
 
@@ -350,13 +360,19 @@ class GameManager {
     checkInput(val) {
         const matchIndex = this.activeEntities.findIndex(e => e.answer === val.toLowerCase().trim());
         if (matchIndex !== -1) {
+            // Vibrate Effect
+            this.container.classList.add('pulse-correct');
+            setTimeout(() => this.container.classList.remove('pulse-correct'), 300);
+
             this.activeEntities[matchIndex].el.remove();
             this.activeEntities.splice(matchIndex, 1);
             this.questionsAnsweredInLevel++;
             this.combo++;
             this.input.value = '';
+            
             if(this.combo >= 3) this.input.classList.add('combo-glow');
             this.playTick(600 + (this.combo * 40), 0.05);
+
             if(this.questionsAnsweredInLevel >= 10) this.stopGame('levelup');
         }
     }
@@ -364,11 +380,11 @@ class GameManager {
     generateMath() {
         let a, b, q, ans;
         let maxNum = 5 + this.level; 
-        let currentType = this.mathTypeCounter % (this.level >= 3 ? 4 : 3);
+        let type = this.mathTypeCounter % 4;
         this.mathTypeCounter++;
-        if(currentType === 0) { a = Math.floor(Math.random() * maxNum) + 1; b = Math.floor(Math.random() * maxNum) + 1; q = `${a} + ${b}`; ans = a + b; }
-        else if(currentType === 1) { b = Math.floor(Math.random() * maxNum) + 1; ans = Math.floor(Math.random() * maxNum) + 1; a = ans + b; q = `${a} - ${b}`; }
-        else if(currentType === 2) { a = Math.floor(Math.random() * 6) + 1; b = Math.floor(Math.random() * 5) + 1; q = `${a} × ${b}`; ans = a * b; }
+        if(type === 0) { a = Math.floor(Math.random() * maxNum) + 1; b = Math.floor(Math.random() * maxNum) + 1; q = `${a} + ${b}`; ans = a + b; }
+        else if(type === 1) { b = Math.floor(Math.random() * maxNum) + 1; ans = Math.floor(Math.random() * maxNum) + 1; a = ans + b; q = `${a} - ${b}`; }
+        else if(type === 2) { a = Math.floor(Math.random() * 6) + 1; b = Math.floor(Math.random() * 5) + 1; q = `${a} × ${b}`; ans = a * b; }
         else { ans = Math.floor(Math.random() * 5) + 1; b = Math.floor(Math.random() * 4) + 1; a = ans * b; q = `${a} ÷ ${b}`; }
         return { text: q, answer: ans };
     }
@@ -377,18 +393,14 @@ class GameManager {
         let current = 1;
         const dotList = [];
         const total = 5 + Math.floor(this.level / 2);
-        const padding = 85;
-
         for(let i=1; i<=total; i++) {
-            let x, y, overlap;
-            let attempts = 0;
+            let x, y, overlap, attempts = 0;
             do {
                 overlap = false;
                 x = Math.random() * (this.container.clientWidth - 80);
                 y = Math.random() * (this.container.clientHeight - 80);
                 for(let d of dotList) {
-                    const dist = Math.sqrt(Math.pow(x-d.x, 2) + Math.pow(y-d.y, 2));
-                    if(dist < padding) { overlap = true; break; }
+                    if(Math.sqrt(Math.pow(x-d.x, 2) + Math.pow(y-d.y, 2)) < 90) { overlap = true; break; }
                 }
                 attempts++;
             } while(overlap && attempts < 150);
