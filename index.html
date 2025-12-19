@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BrainSpeed - Red & Black Edition</title>
+    <title>BrainSpeed - Redline Audio</title>
     <style>
         :root {
-            --primary: #000000; /* Black */
-            --accent: #e74c3c;  /* Red */
+            --primary: #000000;
+            --accent: #e74c3c;
             --text: #ffffff;
             --panel: #1a1a1a;
         }
@@ -26,7 +26,7 @@
 
         header {
             width: 100%;
-            background: #8e0000; /* Darker Red */
+            background: #8e0000;
             padding: 1rem;
             text-align: center;
             border-bottom: 4px solid var(--accent);
@@ -55,7 +55,6 @@
             margin: 15px 0;
             font-size: 1.5rem;
             color: var(--accent);
-            text-shadow: 1px 1px 5px #000;
         }
 
         #game-container {
@@ -78,7 +77,6 @@
             border-radius: 30px;
             font-size: 1.5rem;
             font-weight: bold;
-            box-shadow: 0 0 15px rgba(231, 76, 60, 0.4);
         }
 
         #input-area { margin-top: 20px; display: none; }
@@ -111,7 +109,7 @@
         
         .dot {
             position: absolute;
-            width: 55px; height: 55px;
+            width: 60px; height: 60px;
             background: var(--accent);
             color: white;
             border-radius: 50%;
@@ -121,16 +119,18 @@
             font-weight: bold;
             cursor: pointer;
             border: 2px solid white;
+            font-size: 1.4rem;
+            user-select: none;
         }
 
-        .timer-red { color: #ff0000; animation: blink 1s infinite; }
-        @keyframes blink { 50% { opacity: 0.5; } }
+        .timer-warning { color: #ff0000; animation: blink 0.4s infinite; font-weight: 900; }
+        @keyframes blink { 50% { opacity: 0.2; } }
     </style>
 </head>
 <body>
 
 <header>
-    <h1>🧠 BRAIN Trainer</h1>
+    <h1>🧠 BRAIN SPEED: REDLINE</h1>
     <div class="nav-buttons">
         <button onclick="gameManager.switchGame('math')">MATH</button>
         <button onclick="gameManager.switchGame('grammar')">GRAMMAR</button>
@@ -140,13 +140,13 @@
 
 <div id="hud">
     <span>LEVEL: <span id="level-display">1</span></span>
-    <span id="timer-box" class="hidden">TIME: <span id="timer-display">60</span>s</span>
+    <span id="timer-box" class="hidden">TIME: <span id="timer-display">30</span>s</span>
 </div>
 
 <div id="game-container">
     <div id="overlay">
         <h2 id="overlay-title">READY?</h2>
-        <p id="overlay-msg">Select a mode to begin.</p>
+        <p id="overlay-msg">Anti-overlap system engaged.</p>
         <button id="start-btn" class="hidden" onclick="gameManager.startGame()">START</button>
         <button id="reset-btn" class="hidden" style="color: grey; font-size: 0.7rem; margin-top: 20px;" onclick="gameManager.resetCurrentGameProgress()">Reset Progress</button>
     </div>
@@ -167,34 +167,42 @@ class GameManager {
         this.spawnInterval = null;
         this.gameLoopId = null;
         this.timerInterval = null;
-        this.timeLeft = 60;
+        this.timeLeft = 30;
         this.mathTypeCounter = 0;
-        this.levelStartTime = 0;
+        this.audioCtx = null;
 
         this.container = document.getElementById('game-container');
         this.input = document.getElementById('player-input');
         this.overlay = document.getElementById('overlay');
         this.startBtn = document.getElementById('start-btn');
         
-        this.quotes = [
-            "You can do it!", "Keep pushing!", "Try again, you're getting faster!",
-            "Failure is part of success!", "Focus and win!", "One more time!"
-        ];
+        this.quotes = ["Keep pushing!", "Try again!", "Focus!", "Speed up!", "Don't quit!"];
     }
 
-    saveProgress() { localStorage.setItem(`red_level_${this.currentGameType}`, this.level); }
-    loadProgress(type) { return parseInt(localStorage.getItem(`red_level_${type}`)) || 1; }
+    // Sound Generator
+    playTick(freq = 440, duration = 0.05) {
+        if (!this.audioCtx) this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = this.audioCtx.createOscillator();
+        const gain = this.audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(this.audioCtx.destination);
+        osc.frequency.value = freq;
+        gain.gain.setValueAtTime(0.1, this.audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.0001, this.audioCtx.currentTime + duration);
+        osc.start();
+        osc.stop(this.audioCtx.currentTime + duration);
+    }
+
+    saveProgress() { localStorage.setItem(`redline_save_${this.currentGameType}`, this.level); }
+    loadProgress(type) { return parseInt(localStorage.getItem(`redline_save_${type}`)) || 1; }
 
     resetCurrentGameProgress() {
-        if(confirm("Reset progress?")) {
-            this.level = 1; this.saveProgress(); this.switchGame(this.currentGameType);
-        }
+        if(confirm("Reset Level?")) { this.level = 1; this.saveProgress(); this.switchGame(this.currentGameType); }
     }
 
     updateHUD() {
         document.getElementById('level-display').innerText = this.level;
-        if(this.currentGameType === 'dots') document.getElementById('timer-box').classList.remove('hidden');
-        else document.getElementById('timer-box').classList.add('hidden');
+        document.getElementById('timer-box').className = (this.currentGameType === 'dots') ? "" : "hidden";
     }
 
     switchGame(type) {
@@ -205,8 +213,6 @@ class GameManager {
         this.startBtn.classList.remove('hidden');
         document.getElementById('reset-btn').classList.remove('hidden');
         document.getElementById('overlay-title').innerText = `${type.toUpperCase()} - LEVEL ${this.level}`;
-        document.getElementById('overlay-msg').innerText = "Sudden Death: Don't miss!";
-        this.startBtn.innerText = "START";
         document.getElementById('input-area').style.display = (type === 'dots') ? 'none' : 'block';
     }
 
@@ -217,12 +223,11 @@ class GameManager {
         this.input.focus();
         this.activeEntities = [];
         this.questionsAnsweredInLevel = 0;
-        this.levelStartTime = Date.now();
         this.container.innerHTML = '<div id="overlay" class="hidden"></div>'; 
         this.container.appendChild(this.overlay);
 
         if (this.currentGameType === 'dots') {
-            this.timeLeft = 60;
+            this.timeLeft = 30;
             this.startTimer();
             this.startDotGame();
         } else {
@@ -232,12 +237,16 @@ class GameManager {
 
     startTimer() {
         clearInterval(this.timerInterval);
-        document.getElementById('timer-display').innerText = this.timeLeft;
         this.timerInterval = setInterval(() => {
             this.timeLeft--;
             document.getElementById('timer-display').innerText = this.timeLeft;
-            if(this.timeLeft <= 10) document.getElementById('timer-display').className = "timer-red";
-            else document.getElementById('timer-display').className = "";
+            
+            if(this.timeLeft <= 5 && this.timeLeft > 0) {
+                document.getElementById('timer-display').className = "timer-warning";
+                this.playTick(880, 0.1); // High pitch tick
+            } else {
+                document.getElementById('timer-display').className = "";
+            }
             
             if(this.timeLeft <= 0) this.stopGame('gameover');
         }, 1000);
@@ -251,15 +260,15 @@ class GameManager {
         this.overlay.classList.remove('hidden');
         
         if(reason === 'gameover') {
-            const randomQuote = this.quotes[Math.floor(Math.random() * this.quotes.length)];
+            this.playTick(150, 0.5); // Low fail sound
             document.getElementById('overlay-title').innerText = "GAME OVER";
-            document.getElementById('overlay-msg').innerText = randomQuote;
+            document.getElementById('overlay-msg').innerText = this.quotes[Math.floor(Math.random()*this.quotes.length)];
             this.startBtn.innerText = "RESTART";
         } else {
+            this.level++;
             this.saveProgress();
             this.updateHUD(); 
             document.getElementById('overlay-title').innerText = "LEVEL CLEAR";
-            document.getElementById('overlay-msg').innerText = "Speeding up...";
             this.startBtn.innerText = "NEXT LEVEL";
         }
     }
@@ -267,7 +276,7 @@ class GameManager {
     startScrollingGame() {
         const loop = () => { if(this.isPlaying) { this.updatePositions(); this.gameLoopId = requestAnimationFrame(loop); } };
         this.gameLoopId = requestAnimationFrame(loop);
-        let spawnRate = Math.max(1500, 4500 - (this.level * 100)); 
+        let spawnRate = Math.max(1200, 4000 - (this.level * 120)); 
         this.spawnInterval = setInterval(() => this.spawnQuestion(), spawnRate);
     }
 
@@ -281,7 +290,7 @@ class GameManager {
         el.style.left = '-180px';
         this.container.appendChild(el);
         this.activeEntities.push({
-            el: el, x: -180, speed: 0.60 + (this.level * 0.05), answer: content.answer.toString().toLowerCase()
+            el: el, x: -180, speed: 0.65 + (this.level * 0.05), answer: content.answer.toString().toLowerCase()
         });
     }
 
@@ -301,7 +310,8 @@ class GameManager {
             this.activeEntities.splice(matchIndex, 1);
             this.questionsAnsweredInLevel++;
             this.input.value = '';
-            if(this.questionsAnsweredInLevel >= 10) { this.level++; this.stopGame('levelup'); }
+            this.playTick(600, 0.03); // Pop sound
+            if(this.questionsAnsweredInLevel >= 10) this.stopGame('levelup');
         }
     }
 
@@ -318,25 +328,39 @@ class GameManager {
     }
 
     generateGrammar() {
-        const bank = [{q:"Fast (opp.)", a:"slow"}, {q:"Go (past)", a:"went"}, {q:"Red+Blue=", a:"purple"}, {q:"Sky color", a:"blue"}];
+        const bank = [{q:"Fast (opp.)", a:"slow"}, {q:"Go (past)", a:"went"}, {q:"Red+Blue=", a:"purple"}];
         return bank[Math.floor(Math.random() * bank.length)];
     }
 
     startDotGame() {
         let current = 1;
-        // Logic: Number of dots increases if user is fast (time left > 30s)
-        const bonusDots = this.timeLeft > 30 ? Math.floor(this.level / 2) : 0;
-        const total = 5 + Math.floor(this.level / 2) + bonusDots;
-        
+        const dotList = [];
+        const total = 5 + Math.floor(this.level / 2);
+        const padding = 75; // Increased padding to prevent any touching
+
         for(let i=1; i<=total; i++) {
+            let x, y, overlap;
+            let attempts = 0;
+            do {
+                overlap = false;
+                x = Math.random() * (this.container.clientWidth - 80);
+                y = Math.random() * (this.container.clientHeight - 80);
+                for(let d of dotList) {
+                    const dist = Math.sqrt(Math.pow(x-d.x, 2) + Math.pow(y-d.y, 2));
+                    if(dist < padding) { overlap = true; break; }
+                }
+                attempts++;
+            } while(overlap && attempts < 100);
+
             const dot = document.createElement('div');
             dot.className = 'dot'; dot.innerText = i;
-            dot.style.left = (Math.random() * (this.container.clientWidth - 70)) + 'px';
-            dot.style.top = (Math.random() * (this.container.clientHeight - 70)) + 'px';
+            dot.style.left = x + 'px'; dot.style.top = y + 'px';
+            dotList.push({x, y});
             dot.onclick = () => {
                 if(parseInt(dot.innerText) === current) {
+                    this.playTick(1000, 0.05);
                     dot.remove(); current++;
-                    if(current > total) { this.level++; this.stopGame('levelup'); }
+                    if(current > total) this.stopGame('levelup');
                 } else { this.stopGame('gameover'); }
             };
             this.container.appendChild(dot);
