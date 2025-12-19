@@ -3,263 +3,425 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Brain Trainer Pro</title>
+    <title>BrainSpeed - Pro Edition Ultra Fix</title>
     <style>
         :root {
-            --bg:#000;
-            --accent:#e74c3c;
-            --panel:#1a1a1a;
-            --text:#fff;
-            --gold:#f1c40f;
+            --primary: #000000;
+            --accent: #e74c3c;
+            --text: #ffffff;
+            --panel: #1a1a1a;
         }
-        * { box-sizing: border-box; }
-        body { margin:0; font-family:'Segoe UI',Arial,sans-serif; background:var(--bg); color:var(--text); display:flex; flex-direction:column; min-height:100vh; overflow: hidden;}
-        header { background:#200; border-bottom:4px solid var(--accent); text-align:center; padding:10px; }
-        button { background:#000; border:2px solid var(--accent); color:#fff; padding:8px 14px; margin:3px; border-radius:6px; font-weight:bold; cursor:pointer;}
-        button:hover { background:var(--accent); }
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background-color: var(--primary);
+            color: var(--text);
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+            transition: background 0.5s ease;
+        }
+
+        header {
+            width: 100%;
+            background: rgba(142, 0, 0, 0.5);
+            padding: 1rem;
+            text-align: center;
+            border-bottom: 4px solid var(--accent);
+        }
+
+        .nav-buttons { margin-top: 10px; }
+
+        button {
+            padding: 10px 20px;
+            margin: 0 5px;
+            border: 2px solid var(--accent);
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            background: var(--primary);
+            color: white;
+            transition: 0.3s;
+        }
+
+        button:hover { background: var(--accent); }
+
+        #hud {
+            display: flex;
+            justify-content: space-around;
+            width: 80%;
+            margin: 15px 0;
+            font-size: 1.5rem;
+            color: var(--accent);
+        }
+
+        #game-container {
+            position: relative;
+            width: 95%;
+            max-width: 850px;
+            height: 450px;
+            background: var(--panel);
+            border: 3px solid var(--accent);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        /* EFFECTS */
+        .shake { animation: shake 0.2s infinite; }
+        @keyframes shake {
+            0% { transform: translate(1px, 1px); }
+            50% { transform: translate(-2px, -1px); }
+            100% { transform: translate(1px, 1px); }
+        }
+
+        .pulse-correct { animation: pulse 0.3s ease-out; }
+        @keyframes pulse {
+            0% { transform: scale(1); border-color: white; }
+            50% { transform: scale(1.02); border-color: var(--accent); }
+            100% { transform: scale(1); }
+        }
+
+        .question-bubble {
+            position: absolute;
+            left: -220px;
+            background: var(--accent);
+            color: white;
+            padding: 12px 25px;
+            border-radius: 30px;
+            font-size: 1.3rem;
+            font-weight: bold;
+            box-shadow: 0 0 15px var(--accent);
+            white-space: nowrap;
+            z-index: 5;
+        }
+
+        #input-area { margin-top: 20px; display: none; }
+
+        input {
+            padding: 15px;
+            font-size: 1.8rem;
+            width: 320px;
+            text-align: center;
+            background: #222;
+            color: var(--accent);
+            border: 3px solid var(--accent);
+            border-radius: 12px;
+            outline: none;
+            transition: 0.3s;
+        }
+
+        .combo-glow {
+            box-shadow: 0 0 30px var(--accent), inset 0 0 15px var(--accent) !important;
+            border-color: white !important;
+        }
+
+        #overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            text-align: center;
+        }
+
+        .hidden { display: none !important; }
         
-        #hud { display:flex; justify-content:space-around; color:var(--accent); padding:6px; font-size:1.1rem; }
-        #game { flex:1; margin:8px; border:3px solid var(--accent); border-radius:12px; background:var(--panel); position:relative; overflow:hidden; }
-        
-        .overlay { position:absolute; inset:0; background:rgba(0,0,0,.9); display:flex; flex-direction:column; justify-content:center; align-items:center; z-index:99; }
-        .hidden { display:none !important; }
-        
-        input { padding:12px; font-size:1.2rem; border-radius:10px; border:2px solid var(--accent); background:#111; color:var(--accent); text-align:center; width:80%; max-width:400px; }
-        
-        .bubble { position:absolute; background:var(--accent); color:#fff; padding:10px 18px; border-radius:25px; font-weight:bold; white-space:nowrap; }
-        .dot { width:60px; height:60px; border-radius:50%; background:var(--accent); color:#fff; display:flex; align-items:center; justify-content:center; font-size:1.5rem; font-weight:bold; border:3px solid #fff; position:absolute; cursor:pointer; }
-        
-        #leaderboardBox { position:absolute; top:10px; right:10px; background:rgba(17,17,17,0.8); padding:10px; border-radius:10px; border:1px solid var(--accent); max-width:150px; max-height:200px; overflow-y:auto; font-size: 0.8rem; pointer-events: none;}
-        #inputArea { text-align:center; padding:15px; background: #000; }
-        
-        @media(max-width:600px){ 
-            #leaderboardBox { display: none; }
+        .dot {
+            position: absolute;
+            width: 60px; height: 60px;
+            background: var(--accent);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            cursor: pointer;
+            border: 2px solid white;
+            font-size: 1.4rem;
         }
     </style>
 </head>
 <body>
 
-<header>
-    <h2>Brain Speed Trainer</h2>
-    <div>
-        <button onclick="game.switchGame('math')">MATH</button>
-        <button onclick="game.switchGame('grammar')">GRAMMAR</button>
-        <button onclick="game.switchGame('dots')">DOTS</button>
+<header id="main-header">
+    <h1 id="title-text">🧠 BRAIN SPEED: REDLINE</h1>
+    <div class="nav-buttons">
+        <button onclick="gameManager.switchGame('math')">MATH</button>
+        <button onclick="gameManager.switchGame('grammar')">GRAMMAR</button>
+        <button onclick="gameManager.switchGame('dots')">DOTS</button>
     </div>
 </header>
 
 <div id="hud">
-    <span>LEVEL: <span id="lvlDisplay">1</span></span>
-    <span id="timerContainer" class="hidden">TIME: <span id="timeDisplay">30</span></span>
+    <span>LEVEL: <span id="level-display">1</span></span>
+    <span id="timer-box" class="hidden">TIME: <span id="timer-display">30</span>s</span>
 </div>
 
-<div id="game">
-    <div id="nameBox" class="overlay">
-        <h3 style="color:var(--gold)">ENTER YOUR NAME</h3>
-        <input id="nameInput" maxlength="12" placeholder="Your Name...">
-        <br>
-        <button onclick="game.setName()">SAVE & START</button>
-    </div>
-
-    <div id="gameOverlay" class="overlay hidden">
-        <h2 id="msgDisplay">READY?</h2>
-        <button id="startBtn" onclick="game.start()">START LEVEL</button>
-    </div>
-
-    <div id="leaderboardBox">
-        <h4 style="margin:0 0 5px 0; color:var(--gold)">Session Best</h4>
-        <ul id="leaderList" style="padding-left:16px;margin:0; list-style: none; padding:0;"></ul>
+<div id="game-container">
+    <div id="overlay">
+        <h2 id="overlay-title">READY?</h2>
+        <p id="overlay-msg">Choose a mode to begin.</p>
+        <button id="start-btn" class="hidden" onclick="gameManager.startGame()">START</button>
+        <button id="reset-btn" class="hidden" style="color: grey; font-size: 0.7rem; margin-top: 20px;" onclick="gameManager.resetCurrentGameProgress()">Reset Progress</button>
     </div>
 </div>
 
-<div id="inputArea" class="hidden">
-    <input id="answerInput" placeholder="Type answer..." autocomplete="off">
+<div id="input-area">
+    <input type="text" id="player-input" placeholder="TYPE ANSWER..." autocomplete="off">
 </div>
 
 <script>
-class BrainGame {
+class GameManager {
     constructor() {
-        this.name = localStorage.getItem("bt_name") || "";
         this.level = 1;
-        this.mode = null;
-        this.activeBubbles = [];
-        this.localScores = [];
+        this.currentGameType = null;
         this.isPlaying = false;
-        this.spawnTimer = null;
-        this.updateTimer = null;
-        this.clockTimer = null;
+        this.questionsAnsweredInLevel = 0;
+        this.activeEntities = []; 
+        this.spawnInterval = null;
+        this.gameLoopId = null;
+        this.timerInterval = null;
+        this.timeLeft = 30;
+        this.mathTypeCounter = 0;
+        this.combo = 0;
+        this.audioCtx = null;
+
+        this.container = document.getElementById('game-container');
+        this.input = document.getElementById('player-input');
+        this.overlay = document.getElementById('overlay');
+        this.startBtn = document.getElementById('start-btn');
         
-        this.grammarPool = [
-            {q:"Happy (opp.)",a:"sad"},{q:"Fast (opp.)",a:"slow"},{q:"Big (opp.)",a:"small"},
-            {q:"Hot (opp.)",a:"cold"},{q:"Color: Sky",a:"blue"},{q:"Color: Grass",a:"green"},
-            {q:"Go (past)",a:"went"},{q:"Eat (past)",a:"ate"},{q:"Run (past)",a:"ran"}
+        this.quotes = ["Focus!", "Stay sharp!", "Again!", "Speed up!", "Don't quit!"];
+        
+        this.grammarBank = [
+            {q:"Happy (opp.)", a:"sad"}, {q:"Go (past)", a:"went"}, {q:"Color of grass", a:"green"},
+            {q:"Ice (opp.)", a:"fire"}, {q:"Eat (past)", a:"ate"}, {q:"Opposite: In", a:"out"},
+            {q:"Sun color", a:"yellow"}, {q:"Fast (opp.)", a:"slow"}, {q:"Sea color", a:"blue"},
+            {q:"Hot (opp.)", a:"cold"}, {q:"Up (opp.)", a:"down"}, {q:"Buy (past)", a:"bought"}
         ];
-
-        if(this.name) document.getElementById("nameBox").classList.add("hidden");
     }
 
-    setName() {
-        const val = document.getElementById("nameInput").value.trim();
-        if(val.length > 1) {
-            this.name = val;
-            localStorage.setItem("bt_name", val);
-            document.getElementById("nameBox").classList.add("hidden");
-        }
+    playTick(freq = 440, duration = 0.05) {
+        try {
+            if (!this.audioCtx) this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const osc = this.audioCtx.createOscillator();
+            const gain = this.audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(this.audioCtx.destination);
+            osc.frequency.value = freq;
+            gain.gain.setValueAtTime(0.1, this.audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.0001, this.audioCtx.currentTime + duration);
+            osc.start();
+            osc.stop(this.audioCtx.currentTime + duration);
+        } catch(e) {}
     }
 
-    switchGame(mode) {
-        this.stop();
-        this.mode = mode;
-        this.level = 1;
-        document.getElementById("lvlDisplay").innerText = this.level;
-        document.getElementById("gameOverlay").classList.remove("hidden");
-        document.getElementById("msgDisplay").innerText = `${mode.toUpperCase()} MODE`;
-        document.getElementById("startBtn").innerText = "START";
+    saveProgress() { localStorage.setItem(`rs_pro_v3_${this.currentGameType}`, this.level); }
+    loadProgress(type) { return parseInt(localStorage.getItem(`rs_pro_v3_${type}`)) || 1; }
+
+    resetCurrentGameProgress() {
+        if(confirm("Reset progress?")) { this.level = 1; this.saveProgress(); this.switchGame(this.currentGameType); }
     }
 
-    start() {
-        this.stop();
+    updateTheme() {
+        let color = "#e74c3c"; 
+        let title = "REDLINE";
+        if (this.level > 10) { color = "#9b59b6"; title = "THE VOID"; }
+        else if (this.level > 5) { color = "#2ecc71"; title = "MATRIX"; }
+
+        document.documentElement.style.setProperty('--accent', color);
+        document.getElementById('title-text').innerText = `🧠 BRAIN SPEED: ${title}`;
+        document.getElementById('main-header').style.background = color + "44";
+        document.getElementById('level-display').innerText = this.level;
+    }
+
+    switchGame(type) {
+        this.currentGameType = type;
+        this.level = this.loadProgress(type);
+        this.updateTheme();
+        this.overlay.classList.remove('hidden');
+        this.startBtn.classList.remove('hidden');
+        document.getElementById('reset-btn').classList.remove('hidden');
+        document.getElementById('overlay-title').innerText = `${type.toUpperCase()} - LVL ${this.level}`;
+        document.getElementById('overlay-msg').innerText = "Sudden Death: Fail once, lose all.";
+        document.getElementById('input-area').style.display = (type === 'dots') ? 'none' : 'block';
+        document.getElementById('timer-box').className = (type === 'dots') ? "" : "hidden";
+        this.startBtn.innerText = "START";
+    }
+
+    startGame() {
         this.isPlaying = true;
-        this.count = 0;
-        document.getElementById("gameOverlay").classList.add("hidden");
-        document.getElementById("lvlDisplay").innerText = this.level;
+        this.combo = 0;
+        this.input.classList.remove('combo-glow');
+        this.overlay.classList.add('hidden');
+        this.input.value = '';
+        this.input.focus();
+        this.activeEntities = [];
+        this.questionsAnsweredInLevel = 0;
+        this.container.innerHTML = '<div id="overlay" class="hidden"></div>'; 
+        this.container.appendChild(this.overlay);
 
-        if(this.mode === 'dots') this.startDots();
-        else {
-            document.getElementById("inputArea").classList.remove("hidden");
-            document.getElementById("answerInput").focus();
-            this.spawnTimer = setInterval(() => this.spawn(), Math.max(800, 3000 - (this.level * 250)));
-            this.updateTimer = setInterval(() => this.updateLogic(), 16);
-        }
-    }
-
-    stop() {
-        this.isPlaying = false;
-        clearInterval(this.spawnTimer);
-        clearInterval(this.updateTimer);
-        clearInterval(this.clockTimer);
-        document.getElementById("game").querySelectorAll(".bubble, .dot").forEach(e => e.remove());
-        document.getElementById("inputArea").classList.add("hidden");
-        document.getElementById("timerContainer").classList.add("hidden");
-        document.getElementById("answerInput").value = "";
-    }
-
-    spawn() {
-        if(!this.isPlaying || this.count >= 10) return;
-        let q, a;
-        if(this.mode === "grammar") {
-            let item = this.grammarPool[Math.floor(Math.random() * this.grammarPool.length)];
-            q = item.q; a = item.a;
+        if (this.currentGameType === 'dots') {
+            this.timeLeft = 30;
+            this.startTimer();
+            this.startDotGame();
         } else {
-            let x = Math.floor(Math.random() * (10 + this.level));
-            let y = Math.floor(Math.random() * 10);
-            q = `${x} + ${y}`; a = `${x + y}`;
+            this.startScrollingGame();
         }
-        const el = document.createElement("div");
-        el.className = "bubble";
-        el.innerText = q;
-        el.style.top = Math.random() * (document.getElementById("game").clientHeight - 50) + "px";
-        el.style.left = "-150px";
-        document.getElementById("game").appendChild(el);
-        this.activeBubbles.push({ el, x: -150, a: a.toLowerCase() });
-        this.count++;
     }
 
-    updateLogic() {
-        if(!this.isPlaying) return;
-        this.activeBubbles.forEach((obj, idx) => {
-            obj.x += (0.8 + (this.level * 0.3));
-            obj.el.style.left = obj.x + "px";
-            if(obj.x > document.getElementById("game").clientWidth) this.lose();
+    startTimer() {
+        clearInterval(this.timerInterval);
+        this.timerInterval = setInterval(() => {
+            this.timeLeft--;
+            document.getElementById('timer-display').innerText = this.timeLeft;
+            if(this.timeLeft <= 5 && this.timeLeft > 0) {
+                this.container.classList.add('shake');
+                this.playTick(880, 0.1);
+            } else {
+                this.container.classList.remove('shake');
+            }
+            if(this.timeLeft <= 0) this.stopGame('gameover');
+        }, 1000);
+    }
+
+    stopGame(reason) {
+        this.isPlaying = false;
+        this.container.classList.remove('shake');
+        clearInterval(this.spawnInterval);
+        clearInterval(this.timerInterval);
+        cancelAnimationFrame(this.gameLoopId);
+        this.overlay.classList.remove('hidden');
+        
+        if(reason === 'gameover') {
+            this.playTick(100, 0.6);
+            document.getElementById('overlay-title').innerText = "GAME OVER";
+            document.getElementById('overlay-msg').innerText = this.quotes[Math.floor(Math.random()*this.quotes.length)];
+            this.startBtn.innerText = "RESTART";
+        } else {
+            this.level++;
+            this.saveProgress();
+            this.updateTheme(); 
+            document.getElementById('overlay-title').innerText = "LEVEL CLEAR";
+            this.startBtn.innerText = "NEXT LEVEL";
+        }
+    }
+
+    startScrollingGame() {
+        const loop = () => { if(this.isPlaying) { this.updatePositions(); this.gameLoopId = requestAnimationFrame(loop); } };
+        this.gameLoopId = requestAnimationFrame(loop);
+        let spawnRate = Math.max(1000, 3500 - (this.level * 100)); 
+        this.spawnInterval = setInterval(() => this.spawnQuestion(), spawnRate);
+    }
+
+    spawnQuestion() {
+        if(!this.isPlaying || (this.questionsAnsweredInLevel + this.activeEntities.length >= 10)) return;
+        
+        let qText, aText;
+        if(this.currentGameType === 'grammar') {
+            let item = this.grammarBank[Math.floor(Math.random() * this.grammarBank.length)];
+            qText = item.q; aText = item.a;
+        } else {
+            let math = this.generateMath();
+            qText = math.text; aText = math.answer;
+        }
+
+        const el = document.createElement('div');
+        el.className = 'question-bubble';
+        el.innerText = qText;
+        el.style.top = (60 + Math.random() * (this.container.clientHeight - 130)) + 'px';
+        el.style.left = '-220px';
+        
+        this.container.appendChild(el);
+        this.activeEntities.push({
+            el: el, 
+            x: -220, 
+            speed: 0.75 + (this.level * 0.07), 
+            answer: aText.toString().toLowerCase().trim()
         });
     }
 
-    checkAnswer(val) {
-        const idx = this.activeBubbles.findIndex(b => b.a === val.toLowerCase().trim());
-        if(idx > -1) {
-            this.activeBubbles[idx].el.remove();
-            this.activeBubbles.splice(idx, 1);
-            document.getElementById("answerInput").value = "";
-            if(this.count >= 10 && this.activeBubbles.length === 0) this.win();
+    updatePositions() {
+        for (let i = this.activeEntities.length - 1; i >= 0; i--) {
+            let entity = this.activeEntities[i];
+            entity.x += entity.speed;
+            entity.el.style.left = entity.x + 'px';
+            if (entity.x > this.container.clientWidth) { this.stopGame('gameover'); return; }
         }
     }
 
-    startDots() {
-        document.getElementById("timerContainer").classList.remove("hidden");
-        let currentDot = 1;
-        let totalDots = 5 + Math.floor(this.level / 1.5);
-        let timeLeft = 30;
-        const dotRadius = 75; 
-        const placedDots = [];
-        
-        document.getElementById("timeDisplay").innerText = timeLeft;
-        this.clockTimer = setInterval(() => {
-            timeLeft--;
-            document.getElementById("timeDisplay").innerText = timeLeft;
-            if(timeLeft <= 0) this.lose();
-        }, 1000);
+    checkInput(val) {
+        const matchIndex = this.activeEntities.findIndex(e => e.answer === val.toLowerCase().trim());
+        if (matchIndex !== -1) {
+            // Vibrate Effect
+            this.container.classList.add('pulse-correct');
+            setTimeout(() => this.container.classList.remove('pulse-correct'), 300);
 
-        for(let i=1; i<=totalDots; i++){
-            const d = document.createElement("div");
-            d.className = "dot";
-            d.innerText = i;
-            d.style.zIndex = 100 - i; 
+            this.activeEntities[matchIndex].el.remove();
+            this.activeEntities.splice(matchIndex, 1);
+            this.questionsAnsweredInLevel++;
+            this.combo++;
+            this.input.value = '';
+            
+            if(this.combo >= 3) this.input.classList.add('combo-glow');
+            this.playTick(600 + (this.combo * 40), 0.05);
 
+            if(this.questionsAnsweredInLevel >= 10) this.stopGame('levelup');
+        }
+    }
+
+    generateMath() {
+        let a, b, q, ans;
+        let maxNum = 5 + this.level; 
+        let type = this.mathTypeCounter % 4;
+        this.mathTypeCounter++;
+        if(type === 0) { a = Math.floor(Math.random() * maxNum) + 1; b = Math.floor(Math.random() * maxNum) + 1; q = `${a} + ${b}`; ans = a + b; }
+        else if(type === 1) { b = Math.floor(Math.random() * maxNum) + 1; ans = Math.floor(Math.random() * maxNum) + 1; a = ans + b; q = `${a} - ${b}`; }
+        else if(type === 2) { a = Math.floor(Math.random() * 6) + 1; b = Math.floor(Math.random() * 5) + 1; q = `${a} × ${b}`; ans = a * b; }
+        else { ans = Math.floor(Math.random() * 5) + 1; b = Math.floor(Math.random() * 4) + 1; a = ans * b; q = `${a} ÷ ${b}`; }
+        return { text: q, answer: ans };
+    }
+
+    startDotGame() {
+        let current = 1;
+        const dotList = [];
+        const total = 5 + Math.floor(this.level / 2);
+        for(let i=1; i<=total; i++) {
             let x, y, overlap, attempts = 0;
             do {
                 overlap = false;
-                x = Math.random() * (document.getElementById("game").clientWidth - 70);
-                y = Math.random() * (document.getElementById("game").clientHeight - 70);
-                attempts++;
-                for (let pos of placedDots) {
-                    const dist = Math.sqrt(Math.pow(x-pos.x, 2) + Math.pow(y-pos.y, 2));
-                    if (dist < dotRadius) { overlap = true; break; }
+                x = Math.random() * (this.container.clientWidth - 80);
+                y = Math.random() * (this.container.clientHeight - 80);
+                for(let d of dotList) {
+                    if(Math.sqrt(Math.pow(x-d.x, 2) + Math.pow(y-d.y, 2)) < 90) { overlap = true; break; }
                 }
-            } while (overlap && attempts < 100);
+                attempts++;
+            } while(overlap && attempts < 150);
 
-            placedDots.push({x, y});
-            d.style.left = x + "px";
-            d.style.top = y + "px";
-            d.onclick = () => {
-                if(i === currentDot) {
-                    d.remove();
-                    currentDot++;
-                    if(currentDot > totalDots) this.win();
-                } else this.lose();
+            const dot = document.createElement('div');
+            dot.className = 'dot'; dot.innerText = i;
+            dot.style.left = x + 'px'; dot.style.top = y + 'px';
+            dotList.push({x, y});
+            dot.onclick = () => {
+                if(parseInt(dot.innerText) === current) {
+                    this.playTick(1000 + (current * 40), 0.05);
+                    dot.remove(); current++;
+                    if(current > total) this.stopGame('levelup');
+                } else { this.stopGame('gameover'); }
             };
-            document.getElementById("game").appendChild(d);
+            this.container.appendChild(dot);
         }
-    }
-
-    win() {
-        this.stop();
-        this.level++;
-        this.updateLeaderboard(this.level - 1);
-        document.getElementById("gameOverlay").classList.remove("hidden");
-        document.getElementById("msgDisplay").innerText = "LEVEL CLEAR!";
-        document.getElementById("startBtn").innerText = "NEXT LEVEL";
-    }
-
-    lose() {
-        this.stop();
-        document.getElementById("gameOverlay").classList.remove("hidden");
-        document.getElementById("msgDisplay").innerText = "GAME OVER";
-        document.getElementById("startBtn").innerText = "TRY AGAIN";
-        this.level = 1;
-    }
-
-    updateLeaderboard(score) {
-        if(score > 0) {
-            this.localScores.push({name: this.name || "Player", score: score});
-            this.localScores.sort((a,b) => b.score - a.score);
-        }
-        const html = this.localScores.slice(0, 5).map(i => `<li>${i.name}: ${i.score}</li>`).join('');
-        document.getElementById("leaderList").innerHTML = html;
     }
 }
-
-const game = new BrainGame();
-document.getElementById("answerInput").addEventListener("input", (e) => game.checkAnswer(e.target.value));
+const gameManager = new GameManager();
+document.getElementById('player-input').addEventListener('input', (e) => gameManager.checkInput(e.target.value));
 </script>
 </body>
 </html>
