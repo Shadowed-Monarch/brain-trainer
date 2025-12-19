@@ -26,17 +26,16 @@
         
         input { padding:12px; font-size:1.2rem; border-radius:10px; border:2px solid var(--accent); background:#111; color:var(--accent); text-align:center; width:80%; max-width:400px; }
         
-        .bubble { position:absolute; background:var(--accent); color:#fff; padding:10px 18px; border-radius:25px; font-weight:bold; white-space:nowrap; transition: top 0.2s; }
+        .bubble { position:absolute; background:var(--accent); color:#fff; padding:10px 18px; border-radius:25px; font-weight:bold; white-space:nowrap; }
         .dot { width:60px; height:60px; border-radius:50%; background:var(--accent); color:#fff; display:flex; align-items:center; justify-content:center; font-size:1.5rem; font-weight:bold; border:3px solid #fff; position:absolute; cursor:pointer; }
         
         #leaderboardBox { position:absolute; top:10px; right:10px; background:rgba(17,17,17,0.8); padding:10px; border-radius:10px; border:1px solid var(--accent); max-width:150px; max-height:200px; overflow-y:auto; font-size: 0.8rem; pointer-events: none;}
         #inputArea { text-align:center; padding:15px; background: #000; }
         
         @media(max-width:600px){ 
-            .dot { width:50px; height:50px; } 
+            #leaderboardBox { display: none; }
         }
     </style>
-
 </head>
 <body>
 
@@ -67,41 +66,36 @@
         <button id="startBtn" onclick="game.start()">START LEVEL</button>
     </div>
 
+    <div id="leaderboardBox">
+        <h4 style="margin:0 0 5px 0; color:var(--gold)">Session Best</h4>
+        <ul id="leaderList" style="padding-left:16px;margin:0; list-style: none; padding:0;"></ul>
+    </div>
 </div>
 
 <div id="inputArea" class="hidden">
-    <input id="answerInput" placeholder="Type answer here..." autocomplete="off">
+    <input id="answerInput" placeholder="Type answer..." autocomplete="off">
 </div>
 
 <script>
-
-// Placeholder Sounds (Silent Data URIs)
-const sndCorrect = new Audio("data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YQgAAAAA");
-const sndWrong = new Audio("data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YQgAAAAA");
-
 class BrainGame {
     constructor() {
         this.name = localStorage.getItem("bt_name") || "";
         this.level = 1;
         this.mode = null;
         this.activeBubbles = [];
+        this.localScores = [];
         this.isPlaying = false;
         this.spawnTimer = null;
         this.updateTimer = null;
         this.clockTimer = null;
-        this.count = 0;
         
         this.grammarPool = [
             {q:"Happy (opp.)",a:"sad"},{q:"Fast (opp.)",a:"slow"},{q:"Big (opp.)",a:"small"},
             {q:"Hot (opp.)",a:"cold"},{q:"Color: Sky",a:"blue"},{q:"Color: Grass",a:"green"},
-            {q:"Go (past)",a:"went"},{q:"Eat (past)",a:"ate"},{q:"Run (past)",a:"ran"},
-            {q:"Read (past)",a:"read"},{q:"I ___ to school",a:"went"},{q:"She ___ an apple",a:"ate"}
+            {q:"Go (past)",a:"went"},{q:"Eat (past)",a:"ate"},{q:"Run (past)",a:"ran"}
         ];
 
-        if(this.name) {
-            document.getElementById("nameBox").classList.add("hidden");
-            this.updateLeaderboard();
-        }
+        if(this.name) document.getElementById("nameBox").classList.add("hidden");
     }
 
     setName() {
@@ -110,7 +104,6 @@ class BrainGame {
             this.name = val;
             localStorage.setItem("bt_name", val);
             document.getElementById("nameBox").classList.add("hidden");
-            this.updateLeaderboard();
         }
     }
 
@@ -128,18 +121,14 @@ class BrainGame {
         this.stop();
         this.isPlaying = true;
         this.count = 0;
-        this.activeBubbles = [];
         document.getElementById("gameOverlay").classList.add("hidden");
         document.getElementById("lvlDisplay").innerText = this.level;
 
-        if(this.mode === 'dots') {
-            this.startDots();
-        } else {
+        if(this.mode === 'dots') this.startDots();
+        else {
             document.getElementById("inputArea").classList.remove("hidden");
             document.getElementById("answerInput").focus();
-            // Start spawning
             this.spawnTimer = setInterval(() => this.spawn(), Math.max(800, 3000 - (this.level * 250)));
-            // Start moving
             this.updateTimer = setInterval(() => this.updateLogic(), 16);
         }
     }
@@ -157,7 +146,6 @@ class BrainGame {
 
     spawn() {
         if(!this.isPlaying || this.count >= 10) return;
-
         let q, a;
         if(this.mode === "grammar") {
             let item = this.grammarPool[Math.floor(Math.random() * this.grammarPool.length)];
@@ -167,114 +155,92 @@ class BrainGame {
             let y = Math.floor(Math.random() * 10);
             q = `${x} + ${y}`; a = `${x + y}`;
         }
-
         const el = document.createElement("div");
         el.className = "bubble";
         el.innerText = q;
         el.style.top = Math.random() * (document.getElementById("game").clientHeight - 50) + "px";
         el.style.left = "-150px";
         document.getElementById("game").appendChild(el);
-
         this.activeBubbles.push({ el, x: -150, a: a.toLowerCase() });
         this.count++;
     }
 
     updateLogic() {
         if(!this.isPlaying) return;
-        this.activeBubbles.forEach((obj, index) => {
+        this.activeBubbles.forEach((obj, idx) => {
             obj.x += (0.8 + (this.level * 0.3));
             obj.el.style.left = obj.x + "px";
-
-            if(obj.x > document.getElementById("game").clientWidth) {
-                this.lose();
-            }
+            if(obj.x > document.getElementById("game").clientWidth) this.lose();
         });
     }
 
     checkAnswer(val) {
-        if(!this.isPlaying) return;
-        const index = this.activeBubbles.findIndex(b => b.a === val.toLowerCase().trim());
-        if(index > -1) {
-            sndCorrect.play();
-            this.activeBubbles[index].el.remove();
-            this.activeBubbles.splice(index, 1);
+        const idx = this.activeBubbles.findIndex(b => b.a === val.toLowerCase().trim());
+        if(idx > -1) {
+            this.activeBubbles[idx].el.remove();
+            this.activeBubbles.splice(idx, 1);
             document.getElementById("answerInput").value = "";
-            
-            if(this.count >= 10 && this.activeBubbles.length === 0) {
-                this.win();
-            }
+            if(this.count >= 10 && this.activeBubbles.length === 0) this.win();
         }
     }
 
-startDots() {
-    document.getElementById("timerContainer").classList.remove("hidden");
-    let currentDot = 1;
-    let totalDots = 5 + Math.floor(this.level / 1.5);
-    let timeLeft = 30;
-    const dotRadius = 70; // Minimum distance between dots
-    const placedDots = [];
-    
-    document.getElementById("timeDisplay").innerText = timeLeft;
-    this.clockTimer = setInterval(() => {
-      timeLeft--;
-      document.getElementById("timeDisplay").innerText = timeLeft;
-      if(timeLeft <= 0) this.lose();
-    }, 1000);
+    startDots() {
+        document.getElementById("timerContainer").classList.remove("hidden");
+        let currentDot = 1;
+        let totalDots = 5 + Math.floor(this.level / 1.5);
+        let timeLeft = 30;
+        const dotRadius = 75; 
+        const placedDots = [];
+        
+        document.getElementById("timeDisplay").innerText = timeLeft;
+        this.clockTimer = setInterval(() => {
+            timeLeft--;
+            document.getElementById("timeDisplay").innerText = timeLeft;
+            if(timeLeft <= 0) this.lose();
+        }, 1000);
 
-    for(let i=1; i<=totalDots; i++){
-      const d = document.createElement("div");
-      d.className = "dot";
-      d.innerText = i;
-      // Ensure lower numbers have higher z-index so they aren't hidden
-      d.style.zIndex = 100 - i; 
+        for(let i=1; i<=totalDots; i++){
+            const d = document.createElement("div");
+            d.className = "dot";
+            d.innerText = i;
+            d.style.zIndex = 100 - i; 
 
-      let x, y, overlap;
-      let attempts = 0;
+            let x, y, overlap, attempts = 0;
+            do {
+                overlap = false;
+                x = Math.random() * (document.getElementById("game").clientWidth - 70);
+                y = Math.random() * (document.getElementById("game").clientHeight - 70);
+                attempts++;
+                for (let pos of placedDots) {
+                    const dist = Math.sqrt(Math.pow(x-pos.x, 2) + Math.pow(y-pos.y, 2));
+                    if (dist < dotRadius) { overlap = true; break; }
+                }
+            } while (overlap && attempts < 100);
 
-      // Anti-Overlay Logic: Keep looking for a spot until no overlap
-      do {
-        overlap = false;
-        x = Math.random() * (document.getElementById("game").clientWidth - 70);
-        y = Math.random() * (document.getElementById("game").clientHeight - 70);
-        attempts++;
-
-        for (let pos of placedDots) {
-          const distance = Math.sqrt(Math.pow(x - pos.x, 2) + Math.pow(y - pos.y, 2));
-          if (distance < dotRadius) {
-            overlap = true;
-            break;
-          }
+            placedDots.push({x, y});
+            d.style.left = x + "px";
+            d.style.top = y + "px";
+            d.onclick = () => {
+                if(i === currentDot) {
+                    d.remove();
+                    currentDot++;
+                    if(currentDot > totalDots) this.win();
+                } else this.lose();
+            };
+            document.getElementById("game").appendChild(d);
         }
-        // Safety break to prevent infinite loops if screen is too full
-      } while (overlap && attempts < 100);
-
-      placedDots.push({x, y});
-      d.style.left = x + "px";
-      d.style.top = y + "px";
-
-      d.onclick = () => {
-        if(i === currentDot) {
-          d.remove();
-          currentDot++;
-          if(currentDot > totalDots) this.win();
-        } else {
-          this.lose();
-        }
-      };
-      document.getElementById("game").appendChild(d);
     }
-  }
+
     win() {
         this.stop();
         this.level++;
-        this.submitScore();
+        this.updateLeaderboard(this.level - 1);
         document.getElementById("gameOverlay").classList.remove("hidden");
         document.getElementById("msgDisplay").innerText = "LEVEL CLEAR!";
         document.getElementById("startBtn").innerText = "NEXT LEVEL";
     }
 
     lose() {
-        sndWrong.play();
         this.stop();
         document.getElementById("gameOverlay").classList.remove("hidden");
         document.getElementById("msgDisplay").innerText = "GAME OVER";
@@ -282,36 +248,18 @@ startDots() {
         this.level = 1;
     }
 
-    submitScore() {
-        if(!db || !this.name) return;
-        db.ref('leaderboard').push({
-            name: this.name,
-            score: this.level,
-            timestamp: Date.now()
-        });
-    }
-
-    updateLeaderboard() {
-        if(!db) return;
-        db.ref('leaderboard').orderByChild('score').limitToLast(10).on('value', snap => {
-            let list = [];
-            snap.forEach(s => list.push(s.val()));
-            list.sort((a,b) => b.score - a.score);
-            const html = list.map(i => `<li>${i.name}: Lvl ${i.score}</li>`).join('');
-            document.getElementById("leaderList").innerHTML = html;
-        });
+    updateLeaderboard(score) {
+        if(score > 0) {
+            this.localScores.push({name: this.name || "Player", score: score});
+            this.localScores.sort((a,b) => b.score - a.score);
+        }
+        const html = this.localScores.slice(0, 5).map(i => `<li>${i.name}: ${i.score}</li>`).join('');
+        document.getElementById("leaderList").innerHTML = html;
     }
 }
 
 const game = new BrainGame();
-
-// Global Listeners
-document.getElementById("answerInput").addEventListener("input", (e) => {
-    game.checkAnswer(e.target.value);
-});
+document.getElementById("answerInput").addEventListener("input", (e) => game.checkAnswer(e.target.value));
 </script>
-
 </body>
 </html>
-
-
