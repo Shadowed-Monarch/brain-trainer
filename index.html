@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Brain Train: Redline</title>
+    <title>Brain Train: Redline Optimized</title>
     <style>
         :root {
             --primary: #000000;
@@ -23,71 +23,68 @@
             height: 100vh;
             overflow: hidden;
             transition: background 0.5s ease;
-            touch-action: none;
         }
 
         header {
             width: 100%;
             background: rgba(142, 0, 0, 0.5);
-            padding: 1rem;
+            padding: 0.5rem;
             text-align: center;
             border-bottom: 4px solid var(--accent);
+            z-index: 10;
         }
 
-        .nav-buttons { margin-top: 10px; }
-
-        button {
-            padding: 10px 20px;
-            margin: 0 5px;
+        .nav-buttons button {
+            padding: 8px 15px;
+            margin: 2px;
             border: 2px solid var(--accent);
             border-radius: 5px;
             cursor: pointer;
-            font-weight: bold;
             background: var(--primary);
             color: white;
-            transition: 0.3s;
+            font-weight: bold;
         }
-
-        button:hover { background: var(--accent); }
 
         #hud {
             display: flex;
             justify-content: space-around;
-            width: 80%;
-            margin: 15px 0;
-            font-size: 1.5rem;
+            width: 100%;
+            padding: 10px 0;
+            font-size: 1.2rem;
             color: var(--accent);
+            font-weight: bold;
         }
 
         #game-container {
             position: relative;
             width: 95%;
             max-width: 850px;
-            height: 450px;
+            height: 400px;
             background: var(--panel);
             border: 3px solid var(--accent);
             border-radius: 10px;
             overflow: hidden;
+            /* Prevents objects from going behind the header on mobile */
+            margin-top: 5px; 
         }
 
         .question-bubble {
             position: absolute;
-            left: 0;
             background: var(--accent);
             color: white;
-            padding: 12px 25px;
-            border-radius: 30px;
-            font-size: 1.3rem;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-size: 1.1rem;
             font-weight: bold;
-            box-shadow: 0 0 15px var(--accent);
+            box-shadow: 0 0 10px var(--accent);
             white-space: nowrap;
-            z-index: 5;
             will-change: transform;
+            z-index: 5;
         }
 
         .dot {
             position: absolute;
-            width: 65px; height: 65px;
+            width: 60px; height: 60px;
             background: var(--accent);
             color: white;
             border-radius: 50%;
@@ -95,30 +92,27 @@
             align-items: center;
             justify-content: center;
             font-weight: bold;
-            cursor: pointer;
             border: 2px solid white;
-            font-size: 1.4rem;
-            z-index: 10;
             touch-action: manipulation;
         }
 
-        @media (max-width: 600px) {
-            .dot { width: 48px; height: 48px; font-size: 1.1rem; }
-            #game-container { height: 380px; }
-            .question-bubble { font-size: 1rem; padding: 8px 18px; }
+        #input-area { 
+            width: 100%; 
+            display: none; 
+            text-align: center; 
+            padding: 10px 0;
+            z-index: 20;
         }
 
-        #input-area { margin-top: 20px; display: none; }
         input {
-            padding: 15px;
-            font-size: 1.5rem;
-            width: 80%;
-            max-width: 320px;
-            text-align: center;
+            padding: 12px;
+            font-size: 1.4rem;
+            width: 85%;
+            max-width: 400px;
             background: #222;
             color: var(--accent);
             border: 3px solid var(--accent);
-            border-radius: 12px;
+            border-radius: 10px;
             outline: none;
         }
 
@@ -131,16 +125,24 @@
             align-items: center;
             justify-content: center;
             z-index: 100;
+            text-align: center;
         }
 
         .hidden { display: none !important; }
-        .combo-glow { box-shadow: 0 0 30px var(--accent), inset 0 0 15px var(--accent) !important; border-color: white !important; }
+
+        /* Mobile specific adjustments */
+        @media (max-width: 600px) {
+            #game-container { height: 320px; }
+            .dot { width: 45px; height: 45px; }
+            /* Shift game up when keyboard might be out */
+            body.keyboard-out header { display: none; }
+        }
     </style>
 </head>
 <body>
 
-<header>
-    <h1 id="title-text">🧠 BRAIN SPEED: REDLINE</h1>
+<header id="main-header">
+    <h1 style="margin:0; font-size: 1.2rem;">🧠 BRAIN SPEED: REDLINE</h1>
     <div class="nav-buttons">
         <button onclick="gameManager.switchGame('math')">MATH</button>
         <button onclick="gameManager.switchGame('grammar')">GRAMMAR</button>
@@ -157,13 +159,13 @@
     <div id="overlay">
         <h2 id="overlay-title">READY?</h2>
         <p id="overlay-msg">Choose a mode to begin.</p>
-        <button id="start-btn" class="hidden" onclick="gameManager.startGame()">START</button>
+        <button id="start-btn" class="hidden" onclick="gameManager.startGame()" style="padding: 15px 40px; font-size: 1.2rem;">START</button>
         <button id="reset-btn" class="hidden" style="color: grey; font-size: 0.7rem; margin-top: 20px;" onclick="gameManager.resetCurrentGameProgress()">Reset Progress</button>
     </div>
 </div>
 
 <div id="input-area">
-    <input type="text" id="player-input" placeholder="TYPE..." autocomplete="off">
+    <input type="text" id="player-input" placeholder="Type answer..." autocomplete="off">
 </div>
 
 <script>
@@ -174,76 +176,62 @@ class GameManager {
         this.isPlaying = false;
         this.activeEntities = [];
         this.grammarQueue = [];
-        this.audioCtx = null;
+        this.isMobile = window.innerWidth < 600;
         
         this.container = document.getElementById('game-container');
         this.input = document.getElementById('player-input');
         this.overlay = document.getElementById('overlay');
         this.startBtn = document.getElementById('start-btn');
 
-        this.grammarBank = [
-            {q:"Big (opp.)", a:["small", "tiny", "little"]},
-            {q:"Happy (opp.)", a:["sad", "unhappy", "down"]},
-            {q:"Fast (opp.)", a:["slow", "sluggish"]},
-            {q:"Go (past)", a:["went"]},
-            {q:"Eat (past)", a:["ate"]},
-            {q:"Bring (past)", a:["brought"]},
-            {q:"Beautiful (opp.)", a:["ugly", "hideous"]},
-            {q:"Smart (syn.)", a:["intelligent", "clever", "bright"]},
-            {q:"Quick (syn.)", a:["fast", "rapid", "swift"]},
-            {q:"Hard (opp.)", a:["soft", "easy"]},
-            {q:"Color of sky", a:["blue", "light blue"]},
-            {q:"Color of grass", a:["green"]},
-            {q:"A baby dog", a:["puppy", "pup"]},
-            {q:"A baby cat", a:["kitten", "kitty"]},
-            {q:"Frozen water", a:["ice", "snow"]},
-            {q:"To start (syn.)", a:["begin", "commence"]},
-            {q:"Finish (syn.)", a:["end", "complete", "stop"]}
-        ];
-    }
+        // Difficulty based Question Banks
+        this.grammarBank = {
+            easy: [ // Levels 1-10
+                {q:"Opposite of: Big", a:["small", "tiny"]}, {q:"Opposite of: Hot", a:["cold"]},
+                {q:"Opposite of: Up", a:["down"]}, {q:"Opposite of: In", a:["out"]},
+                {q:"Synonym of: Fast", a:["quick", "rapid"]}, {q:"Synonym of: Sad", a:["unhappy"]},
+                {q:"Color of: Grass", a:["green"]}, {q:"Color of: Sky", a:["blue"]},
+                {q:"Opposite of: Happy", a:["sad"]}, {q:"Opposite of: Go", a:["stop"]}
+            ],
+            medium: [ // Levels 11-25
+                {q:"Baby of: Dog", a:["puppy", "pup"]}, {q:"Baby of: Cat", a:["kitten", "kitty"]},
+                {q:"Past tense: Go", a:["went"]}, {q:"Past tense: Eat", a:["ate"]},
+                {q:"Opposite of: Rich", a:["poor"]}, {q:"Opposite of: Hard", a:["soft", "easy"]},
+                {q:"Baby of: Lion", a:["cub"]}, {q:"Baby of: Sheep", a:["lamb"]}
+            ],
+            hard: [ // Levels 26-50
+                {q:"Opposite of: Arrive", a:["depart", "leave"]}, {q:"Past tense: Buy", a:["bought"]},
+                {q:"Opposite of: Brave", a:["cowardly", "scared"]}, {q:"Synonym of: Huge", a:["massive", "giant"]},
+                {q:"Synonym of: Smart", a:["intelligent", "bright"]}, {q:"Past tense: Think", a:["thought"]}
+            ]
+        };
 
-    playTick(freq = 440, duration = 0.05) {
-        try {
-            if (!this.audioCtx) this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            if (this.audioCtx.state === 'suspended') this.audioCtx.resume();
-            const osc = this.audioCtx.createOscillator();
-            const gain = this.audioCtx.createGain();
-            osc.connect(gain); gain.connect(this.audioCtx.destination);
-            osc.frequency.value = freq;
-            gain.gain.setValueAtTime(0.1, this.audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.0001, this.audioCtx.currentTime + duration);
-            osc.start(); osc.stop(this.audioCtx.currentTime + duration);
-        } catch(e) {}
+        // Keyboard detection for mobile
+        this.input.addEventListener('focus', () => document.body.classList.add('keyboard-out'));
+        this.input.addEventListener('blur', () => document.body.classList.remove('keyboard-out'));
     }
 
     saveProgress() { localStorage.setItem(`rs_pro_v3_${this.currentGameType}`, this.level); }
     loadProgress(type) { return parseInt(localStorage.getItem(`rs_pro_v3_${type}`)) || 1; }
-
-    resetCurrentGameProgress() {
-        if(confirm("Reset progress?")) { this.level = 1; this.saveProgress(); this.switchGame(this.currentGameType); }
-    }
-
-    updateTheme() {
-        let color = this.level > 10 ? "#9b59b6" : (this.level > 5 ? "#2ecc71" : "#e74c3c");
-        document.documentElement.style.setProperty('--accent', color);
-        document.getElementById('level-display').innerText = this.level;
-    }
+    resetCurrentGameProgress() { if(confirm("Reset progress?")) { this.level = 1; this.saveProgress(); this.switchGame(this.currentGameType); } }
 
     switchGame(type) {
         this.currentGameType = type;
         this.level = this.loadProgress(type);
-        this.updateTheme();
+        document.getElementById('level-display').innerText = this.level;
         this.overlay.classList.remove('hidden');
         this.startBtn.classList.remove('hidden');
         document.getElementById('reset-btn').classList.remove('hidden');
         document.getElementById('overlay-title').innerText = `${type.toUpperCase()} - LVL ${this.level}`;
         document.getElementById('input-area').style.display = (type === 'dots') ? 'none' : 'block';
         document.getElementById('timer-box').className = (type === 'dots') ? "" : "hidden";
+        
+        // Dynamic theme color
+        let color = this.level > 25 ? "#9b59b6" : (this.level > 10 ? "#2ecc71" : "#e74c3c");
+        document.documentElement.style.setProperty('--accent', color);
     }
 
     startGame() {
         this.isPlaying = true;
-        this.combo = 0;
         this.questionsAnsweredInLevel = 0;
         this.activeEntities = [];
         this.overlay.classList.add('hidden');
@@ -260,6 +248,72 @@ class GameManager {
         }
     }
 
+    startScrollingGame() {
+        const loop = () => { if(this.isPlaying) { this.updatePositions(); this.gameLoopId = requestAnimationFrame(loop); } };
+        this.gameLoopId = requestAnimationFrame(loop);
+        
+        // SPEED CONTROL: Level 1 is much slower now
+        // Base speed is slower on mobile because screen is shorter
+        let spawnInterval = Math.max(1200, 4000 - (this.level * 100));
+        this.spawnInterval = setInterval(() => this.spawnQuestion(), spawnInterval);
+    }
+
+    spawnQuestion() {
+        if(!this.isPlaying || (this.questionsAnsweredInLevel + this.activeEntities.length >= 10)) return;
+        
+        // Prevent stacking boxes
+        const last = this.activeEntities[this.activeEntities.length - 1];
+        if (last && last.x < (this.isMobile ? 120 : 180)) return;
+
+        let qData;
+        if(this.currentGameType === 'grammar') {
+            let bank = this.level <= 10 ? this.grammarBank.easy : (this.level <= 25 ? this.grammarBank.medium : this.grammarBank.hard);
+            qData = bank[Math.floor(Math.random() * bank.length)];
+        } else {
+            let a = Math.floor(Math.random() * (this.level + 5)) + 1;
+            let b = Math.floor(Math.random() * (this.level + 5)) + 1;
+            qData = { q: `${a} + ${b}`, a: [(a+b).toString()] };
+        }
+
+        const el = document.createElement('div');
+        el.className = 'question-bubble';
+        el.innerText = qData.q;
+        
+        // LANES: Start lower so mobile users can see them under the header
+        const lanes = this.isMobile ? [50, 120, 190, 260] : [70, 150, 230, 310];
+        el.style.top = lanes[Math.floor(Math.random() * lanes.length)] + 'px';
+        
+        this.container.appendChild(el);
+        
+        // SPEED SCALING: Mobile moves slower because it has less screen space
+        let baseSpeed = this.isMobile ? 0.4 : 0.7;
+        let speed = baseSpeed + (this.level * 0.05);
+
+        this.activeEntities.push({ el, x: -250, speed: speed, answer: qData.a });
+    }
+
+    updatePositions() {
+        for (let i = this.activeEntities.length - 1; i >= 0; i--) {
+            let ent = this.activeEntities[i];
+            ent.x += ent.speed;
+            ent.el.style.transform = `translate3d(${ent.x}px, 0, 0)`;
+            if (ent.x > this.container.clientWidth) { this.stopGame('gameover'); return; }
+        }
+    }
+
+    checkInput(val) {
+        const input = val.toLowerCase().trim();
+        const idx = this.activeEntities.findIndex(e => e.answer.includes(input));
+        if (idx !== -1) {
+            this.activeEntities[idx].el.remove();
+            this.activeEntities.splice(idx, 1);
+            this.questionsAnsweredInLevel++;
+            this.input.value = '';
+            if(this.questionsAnsweredInLevel >= 10) this.stopGame('levelup');
+        }
+    }
+
+    // Timer and Dot Logic (Simplified for brevity but mobile-optimized)
     startTimer() {
         clearInterval(this.timerInterval);
         this.timerInterval = setInterval(() => {
@@ -275,105 +329,29 @@ class GameManager {
         clearInterval(this.timerInterval);
         cancelAnimationFrame(this.gameLoopId);
         this.overlay.classList.remove('hidden');
-
         if(reason === 'gameover') {
             document.getElementById('overlay-title').innerText = "GAME OVER";
             this.startBtn.innerText = "RETRY";
         } else {
             this.level++;
             this.saveProgress();
-            this.updateTheme();
+            this.switchGame(this.currentGameType);
             document.getElementById('overlay-title').innerText = "LEVEL CLEAR";
             this.startBtn.innerText = "NEXT LEVEL";
         }
     }
 
-    startScrollingGame() {
-        const loop = () => { if(this.isPlaying) { this.updatePositions(); this.gameLoopId = requestAnimationFrame(loop); } };
-        this.gameLoopId = requestAnimationFrame(loop);
-        this.spawnInterval = setInterval(() => this.spawnQuestion(), 1000);
-    }
-
-    spawnQuestion() {
-        if(!this.isPlaying || (this.questionsAnsweredInLevel + this.activeEntities.length >= 10)) return;
-
-        const last = this.activeEntities[this.activeEntities.length - 1];
-        if (last && last.x < 80) return; // Spacing logic
-
-        let qText, aText;
-        if(this.currentGameType === 'grammar') {
-            if (this.grammarQueue.length === 0) this.grammarQueue = this.grammarBank.slice().sort(() => Math.random() - 0.5);
-            let item = this.grammarQueue.pop();
-            qText = item.q; aText = item.a;
-        } else {
-            let math = this.generateMath();
-            qText = math.text; aText = [math.answer.toString()];
-        }
-
-        const el = document.createElement('div');
-        el.className = 'question-bubble';
-        el.innerText = qText;
-        const lanes = [60, 140, 220, 300];
-        el.style.top = lanes[Math.floor(Math.random()*lanes.length)] + 'px';
-        
-        this.container.appendChild(el);
-        this.activeEntities.push({ el, x: -220, speed: 0.8 + (this.level * 0.08), answer: aText });
-    }
-
-    updatePositions() {
-        for (let i = this.activeEntities.length - 1; i >= 0; i--) {
-            let ent = this.activeEntities[i];
-            ent.x += ent.speed;
-            ent.el.style.transform = `translate3d(${ent.x}px, 0, 0)`;
-            if (ent.x > this.container.clientWidth) { this.stopGame('gameover'); return; }
-        }
-    }
-
-    checkInput(val) {
-        const input = val.toLowerCase().trim();
-        if(!input) return;
-        const idx = this.activeEntities.findIndex(e => e.answer.includes(input));
-        if (idx !== -1) {
-            this.activeEntities[idx].el.remove();
-            this.activeEntities.splice(idx, 1);
-            this.questionsAnsweredInLevel++;
-            this.input.value = '';
-            this.playTick(600, 0.05);
-            if(this.questionsAnsweredInLevel >= 10) this.stopGame('levelup');
-        }
-    }
-
-    generateMath() {
-        let a = Math.floor(Math.random()*(5+this.level))+1;
-        let b = Math.floor(Math.random()*(5+this.level))+1;
-        return { text: `${a} + ${b}`, answer: a + b };
-    }
-
     startDotGame() {
         let current = 1;
         const total = 5 + Math.floor(this.level / 2);
-        const isMob = window.innerWidth < 600;
-        const minDist = isMob ? 52 : 80;
-
-        const dots = [];
         for(let i=1; i<=total; i++) {
-            let x, y, overlap, tries = 0;
-            do {
-                overlap = false;
-                x = Math.random() * (this.container.clientWidth - 70);
-                y = Math.random() * (this.container.clientHeight - 70);
-                for(let d of dots) if(Math.sqrt((x-d.x)**2 + (y-d.y)**2) < minDist) overlap = true;
-                if(tries++ > 100) overlap = false;
-            } while(overlap);
-
             const dot = document.createElement('div');
             dot.className = 'dot'; dot.innerText = i;
-            dot.style.left = x + 'px'; dot.style.top = y + 'px';
-            dots.push({x, y});
-            dot.onclick = (e) => {
-                e.preventDefault();
+            dot.style.left = Math.random()*(this.container.clientWidth-60)+'px';
+            dot.style.top = Math.random()*(this.container.clientHeight-60)+'px';
+            dot.onclick = () => {
                 if(parseInt(dot.innerText) === current) {
-                    this.playTick(800+(current*50)); dot.remove(); current++;
+                    dot.remove(); current++;
                     if(current > total) this.stopGame('levelup');
                 } else this.stopGame('gameover');
             };
