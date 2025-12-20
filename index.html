@@ -12,10 +12,11 @@
             color: var(--text); 
             display: flex; flex-direction: column; align-items: center; 
             transition: background 0.5s;
+            margin: 0; padding: 20px;
         }
         .hub-container {
-            display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;
-            margin-top: 50px; padding: 20px;
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); 
+            gap: 20px; width: 100%; max-width: 600px; margin-top: 30px;
         }
         .game-card {
             background: #1a1a1a; border: 3px solid var(--accent);
@@ -23,40 +24,43 @@
             cursor: pointer; transition: 0.3s; text-decoration: none; color: white;
         }
         .game-card:hover { transform: scale(1.05); box-shadow: 0 0 20px var(--accent); }
-        .game-card img { width: 80px; height: 80px; margin-bottom: 10px; }
+        .game-card h3 { margin: 10px 0 0 0; font-size: 1.2rem; }
         
-        /* Settings Styles */
-        #settings-panel {
-            margin-top: 30px; padding: 20px; background: #1a1a1a;
-            border-radius: 10px; border: 1px solid #444;
+        .settings {
+            margin-top: 40px; padding: 15px; background: #111;
+            border-radius: 10px; border: 1px solid #333; text-align: center;
         }
-        .color-btn { width: 30px; height: 30px; border-radius: 50%; cursor: pointer; border: 2px solid white; margin: 5px; }
+        .color-options { display: flex; justify-content: center; gap: 15px; margin-top: 10px; }
+        .color-btn { width: 35px; height: 35px; border-radius: 50%; cursor: pointer; border: 2px solid #fff; }
     </style>
 </head>
 <body>
-    <h1>🧠 BRAIN SPEED HUB</h1>
+    <h1>🧠 BRAIN SPEED</h1>
+    <p>Select your training zone:</p>
     
     <div class="hub-container">
         <a href="math.html" class="game-card">
-            <img src="https://cdn-icons-png.flaticon.com/512/3771/3771278.png" alt="Math">
+            <div style="font-size: 3rem;">➗</div>
             <h3>MATH</h3>
         </a>
         <a href="grammar.html" class="game-card">
-            <img src="https://cdn-icons-png.flaticon.com/512/3850/3850285.png" alt="Grammar">
+            <div style="font-size: 3rem;">ABC</div>
             <h3>GRAMMAR</h3>
         </a>
         <a href="dots.html" class="game-card">
-            <img src="https://cdn-icons-png.flaticon.com/512/3306/3306631.png" alt="Dots">
+            <div style="font-size: 3rem;">🔘</div>
             <h3>DOTS</h3>
         </a>
     </div>
 
-    <div id="settings-panel">
-        <h3>Settings: Background Color</h3>
-        <div class="color-btn" style="background: #000;" onclick="changeBg('#000')"></div>
-        <div class="color-btn" style="background: #1a1a2e;" onclick="changeBg('#1a1a2e')"></div>
-        <div class="color-btn" style="background: #2c3e50;" onclick="changeBg('#2c3e50')"></div>
-        <div class="color-btn" style="background: #1e272e;" onclick="changeBg('#1e272e')"></div>
+    <div class="settings">
+        <h3>Theme Settings</h3>
+        <div class="color-options">
+            <div class="color-btn" style="background: #000;" onclick="changeBg('#000')"></div>
+            <div class="color-btn" style="background: #1a1a2e;" onclick="changeBg('#1a1a2e')"></div>
+            <div class="color-btn" style="background: #0b2010;" onclick="changeBg('#0b2010')"></div>
+            <div class="color-btn" style="background: #2c3e50;" onclick="changeBg('#2c3e50')"></div>
+        </div>
     </div>
 
     <script>
@@ -64,7 +68,6 @@
             document.body.style.backgroundColor = color;
             localStorage.setItem('user_bg_choice', color);
         }
-        // Load preference
         window.onload = () => {
             const saved = localStorage.getItem('user_bg_choice');
             if(saved) document.body.style.backgroundColor = saved;
