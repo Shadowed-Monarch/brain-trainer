@@ -10,7 +10,7 @@
         header { width: 100%; padding: 10px 20px; display: flex; justify-content: space-between; border-bottom: 2px solid var(--accent); align-items: center; background: #050505; box-sizing: border-box; }
         .brain-wrap { display: flex; align-items: center; gap: 8px; color: var(--brain); font-weight: bold; }
         #game-container { position: relative; width: 95%; max-width: 800px; height: 350px; background: #080808; border: 2px solid var(--accent); border-radius: 15px; margin-top: 10px; overflow: hidden; }
-        .bubble { position: absolute; background: var(--accent); width: 140px; height: 65px; border-radius: 15px; font-weight: bold; box-shadow: 0 0 15px var(--accent); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 5; text-align: center; padding: 5px; box-sizing: border-box; }
+        .bubble { position: absolute; background: var(--accent); width: 140px; height: 65px; border-radius: 15px; font-weight: bold; box-shadow: 0 0 15px var(--accent); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 5; text-align: center; padding: 5px; box-sizing: border-box; transition: transform 0.1s; }
         .bubble span { font-size: 0.7rem; opacity: 0.8; margin-bottom: 3px; }
         #ans { padding: 15px; width: 80%; max-width: 300px; margin-top: 20px; background: #111; border: 2px solid var(--accent); color: #fff; border-radius: 12px; font-size: 22px; text-align: center; outline: none; }
         #ans.correct { border-color: #0f0; box-shadow: 0 0 15px #0f0; }
@@ -48,9 +48,11 @@
                     {q:"HOT", a:"cold"}, {q:"BIG", a:"small"}, {q:"UP", a:"down"}, {q:"HAPPY", a:"sad"},
                     {q:"FAST", a:"slow"}, {q:"DAY", a:"night"}, {q:"OPEN", a:"closed"}, {q:"NEW", a:"old"},
                     {q:"GOOD", a:"bad"}, {q:"LONG", a:"short"}, {q:"WET", a:"dry"}, {q:"HARD", a:"soft"},
-                    {q:"BRIGHT", a:"dark"}, {q:"RICH", a:"poor"}, {q:"FULL", a:"empty"}
+                    {q:"BRIGHT", a:"dark"}, {q:"RICH", a:"poor"}, {q:"FULL", a:"empty"}, {q:"BOY", a:"girl"},
+                    {q:"LEFT", a:"right"}, {q:"IN", a:"out"}, {q:"YES", a:"no"}, {q:"STOP", a:"go"}
                 ];
                 this.isPlaying = false;
+                this.active = null;
                 this.initMenu();
                 this.applyTheme();
             }
@@ -73,35 +75,46 @@
                 document.documentElement.style.setProperty('--accent', c[skin] || '#f00');
             }
             start() {
+                document.querySelectorAll('.bubble').forEach(b => b.remove());
                 this.isPlaying = true; this.solved = 0; this.active = null;
                 document.getElementById('overlay').style.display = 'none';
+                document.getElementById('count').innerText = "0";
                 document.getElementById('ans').value = ""; document.getElementById('ans').focus();
-                this.spawn(); this.loop();
+                this.spawn(); 
+                this.requestLoop();
             }
             spawn() {
+                if (!this.isPlaying) return;
                 if (this.solved >= 10) return this.end(true);
                 const item = this.wordBank[Math.floor(Math.random() * this.wordBank.length)];
                 const el = document.createElement('div'); el.className = 'bubble';
-                el.innerHTML = `<span>OPPOSITE OF:</span>${item.q}`;
+                el.innerHTML = `<span>OPPOSITE:</span>${item.q}`;
                 el.style.top = (Math.random() * 240 + 30) + "px"; el.style.left = "-150px";
                 document.getElementById('game-container').appendChild(el);
-                const speed = 0.5 + (selectedLvl * 0.04);
+                const speed = 0.5 + (selectedLvl * 0.03); // Slower scaling for mobile
                 this.active = { el, x: -150, s: speed, a: item.a.toLowerCase() };
             }
-            loop() {
-                if(!this.isPlaying || !this.active) return;
-                this.active.x += this.active.s;
-                this.active.el.style.left = this.active.x + "px";
-                if(this.active.x > document.getElementById('game-container').offsetWidth) return this.end(false);
-                requestAnimationFrame(() => this.loop());
+            requestLoop() {
+                if(!this.isPlaying) return;
+                if(this.active) {
+                    this.active.x += this.active.s;
+                    this.active.el.style.left = this.active.x + "px";
+                    if(this.active.x > document.getElementById('game-container').offsetWidth) {
+                        return this.end(false);
+                    }
+                }
+                requestAnimationFrame(() => this.requestLoop());
             }
             end(win) {
                 this.isPlaying = false; if(this.active) this.active.el.remove();
+                this.active = null;
                 document.getElementById('overlay').style.display = 'flex';
                 if(win) {
                     this.brains += (selectedLvl * 15);
-                    if (selectedLvl === this.unlockedLvl) this.unlockedLvl++;
-                    localStorage.setItem('bt_unlocked_grammar', this.unlockedLvl);
+                    if (selectedLvl === this.unlockedLvl) {
+                        this.unlockedLvl++;
+                        localStorage.setItem('bt_unlocked_grammar', this.unlockedLvl);
+                    }
                     localStorage.setItem('bt_coins', this.brains);
                     document.getElementById('m-title').innerText = "LEVEL CLEAR!";
                 } else { document.getElementById('m-title').innerText = "GAME OVER"; }
@@ -110,10 +123,19 @@
         }
         const game = new GrammarGame();
         document.getElementById('ans').addEventListener('input', (e) => {
-            if(game.active && e.target.value.toLowerCase().trim() === game.active.a) {
-                game.active.el.remove(); game.active = null; game.solved++;
+            if(game.isPlaying && game.active && e.target.value.toLowerCase().trim() === game.active.a) {
+                const bubble = game.active.el;
+                game.active = null;
+                game.solved++;
                 document.getElementById('count').innerText = game.solved;
-                e.target.value = ''; setTimeout(() => game.spawn(), 200);
+                document.getElementById('ans').classList.add('correct');
+                bubble.style.transform = "scale(0)";
+                setTimeout(() => {
+                    bubble.remove();
+                    document.getElementById('ans').classList.remove('correct');
+                    e.target.value = ''; 
+                    game.spawn();
+                }, 150);
             }
         });
     </script>
