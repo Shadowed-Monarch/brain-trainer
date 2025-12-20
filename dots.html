@@ -9,14 +9,47 @@
         body { font-family: sans-serif; background: var(--bg); color: #fff; margin: 0; display: flex; flex-direction: column; align-items: center; height: 100vh; overflow: hidden; }
         header { width: 100%; padding: 15px 25px; display: flex; justify-content: space-between; border-bottom: 2px solid var(--accent); align-items: center; background: #050505; box-sizing: border-box; }
         .brain-wrap { display: flex; align-items: center; gap: 8px; color: var(--brain); font-weight: bold; }
-        #game-container { position: relative; width: 95%; max-width: 800px; height: 500px; background: #080808; border: 2px solid var(--accent); border-radius: 15px; margin-top: 20px; cursor: crosshair; }
-        .dot { position: absolute; width: 55px; height: 55px; border-radius: 50%; background: var(--accent); border: 2px solid #fff; display: flex; align-items: center; justify-content: center; font-weight: bold; cursor: pointer; user-select: none; box-shadow: 0 0 15px var(--accent); font-size: 1.2rem; transition: transform 0.1s; }
+        
+        #game-container { 
+            position: relative; 
+            width: 95%; 
+            max-width: 800px; 
+            height: 500px; 
+            background: #080808; 
+            border: 2px solid var(--accent); 
+            border-radius: 15px; 
+            margin-top: 20px; 
+            cursor: crosshair; 
+            overflow: hidden; /* Prevents dots from bleeding out */
+        }
+        
+        .dot { 
+            position: absolute; 
+            width: 50px; 
+            height: 50px; 
+            border-radius: 50%; 
+            background: var(--accent); 
+            border: 2px solid #fff; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            font-weight: bold; 
+            cursor: pointer; 
+            user-select: none; 
+            box-shadow: 0 0 15px var(--accent); 
+            font-size: 1.2rem; 
+            transition: transform 0.1s, opacity 0.1s; 
+            z-index: 5;
+        }
+        
         .dot:active { transform: scale(0.9); }
-        #overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.92); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 10; text-align: center; }
+        
+        #overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.92); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 10; text-align: center; border-radius: 13px; }
         .diff-btn { padding: 10px 20px; margin: 5px; border: 1px solid #444; background: #222; color: white; cursor: pointer; border-radius: 8px; }
         .diff-btn.active { border-color: var(--accent); background: var(--accent); }
-        #timer-bar-container { width: 100%; height: 5px; background: #222; position: absolute; bottom: 0; }
-        #timer-bar { height: 100%; background: var(--accent); width: 100%; }
+        
+        #timer-bar-container { width: 100%; height: 8px; background: #222; position: absolute; bottom: 0; z-index: 6; }
+        #timer-bar { height: 100%; background: var(--accent); width: 100%; transition: width 0.1s linear; }
     </style>
 </head>
 <body>
@@ -24,7 +57,7 @@
         <a href="index.html" style="color:white; text-decoration:none; border:1px solid #fff; padding:5px 12px; border-radius:5px;">HOME</a>
         <div class="brain-wrap">
             <span style="margin-right:15px; color:#aaa;">TIME: <span id="time-text">10.0</span>s</span>
-            <img src="https://img.icons8.com/fluency/48/brain.png" style="width:22px;"> <span id="cur-brains">0</span>
+            <img src="https://img.icons8.com/fluency/48/brain.png" alt="brain" style="width:22px;"> <span id="cur-brains">0</span>
         </div>
     </header>
 
@@ -32,11 +65,13 @@
         <div id="timer-bar-container"><div id="timer-bar"></div></div>
         <div id="overlay">
             <h2 id="title">DOTS REFLEX</h2>
-            <p>Click dots in numerical order!<br>Select amount of dots:</p>
+            <p id="message">Click dots in numerical order!<br>Select amount of dots:</p>
             <div>
                 <button class="diff-btn active" onclick="setLimit(5, this)">5 Dots</button>
                 <button class="diff-btn" onclick="setLimit(10, this)">10 Dots</button>
                 <button class="diff-btn" onclick="setLimit(15, this)">15 Dots</button>
+                <button class="diff-btn" onclick="setLimit(20, this)">20 Dots</button>
+                <button class="diff-btn" onclick="setLimit(25, this)">25 Dots</button>
             </div>
             <button onclick="game.start()" style="margin-top:20px; padding:12px 50px; background:var(--accent); border:none; color:white; border-radius:30px; font-weight:bold; cursor:pointer;">START</button>
         </div>
@@ -56,36 +91,78 @@
                 this.skin = localStorage.getItem('bt_current_skin') || 'red';
                 this.applyTheme();
                 document.getElementById('cur-brains').innerText = this.brains;
+                this.gameTimer = null;
             }
+
             applyTheme() {
-                const c = {red:'#f00', blue:'#08f', yellow:'#fc0', green:'#0f0', purple:'#90f'};
-                document.documentElement.style.setProperty('--accent', c[this.skin] || '#fff');
+                const colors = {red:'#f00', blue:'#08f', yellow:'#fc0', green:'#0f0', purple:'#90f'};
+                document.documentElement.style.setProperty('--accent', colors[this.skin] || '#f00');
             }
+
             start() {
-                this.isPlaying = true; this.cur = 1;
-                this.timeLeft = 10.0;
+                this.isPlaying = true; 
+                this.cur = 1;
+                // Dynamic time: 5s base + 1s per dot
+                this.maxTime = 5 + (dotCount * 0.8);
+                this.timeLeft = this.maxTime;
+                
                 document.getElementById('overlay').style.display = 'none';
                 this.spawnDots();
                 
+                if(this.gameTimer) clearInterval(this.gameTimer);
                 this.gameTimer = setInterval(() => {
                     this.timeLeft -= 0.1;
-                    document.getElementById('time-text').innerText = this.timeLeft.toFixed(1);
-                    document.getElementById('timer-bar').style.width = (this.timeLeft / 10 * 100) + "%";
-                    if(this.timeLeft <= 0) this.end('FAIL');
+                    if (this.timeLeft <= 0) {
+                        this.timeLeft = 0;
+                        this.end('FAIL');
+                    }
+                    this.updateUI();
                 }, 100);
             }
+
+            updateUI() {
+                document.getElementById('time-text').innerText = this.timeLeft.toFixed(1);
+                const percent = (this.timeLeft / this.maxTime) * 100;
+                document.getElementById('timer-bar').style.width = percent + "%";
+            }
+
             spawnDots() {
                 const container = document.getElementById('game-container');
                 container.querySelectorAll('.dot').forEach(d => d.remove());
+                
+                const positions = [];
+                const dotSize = 60; // Size + padding
+
                 for(let i=1; i<=dotCount; i++) {
                     const d = document.createElement('div');
-                    d.className = 'dot'; d.innerText = i;
-                    d.style.left = Math.random() * (container.offsetWidth - 60) + "px";
-                    d.style.top = Math.random() * (container.offsetHeight - 80) + "px";
-                    d.onclick = () => {
+                    d.className = 'dot'; 
+                    d.innerText = i;
+                    
+                    // Simple collision avoidance
+                    let x, y, overlap;
+                    let attempts = 0;
+                    do {
+                        overlap = false;
+                        x = Math.random() * (container.offsetWidth - dotSize);
+                        y = Math.random() * (container.offsetHeight - dotSize - 10); // Stay above timer bar
+                        
+                        // Check if this position overlaps with existing dots
+                        for (let pos of positions) {
+                            const dist = Math.hypot(x - pos.x, y - pos.y);
+                            if (dist < dotSize) { overlap = true; break; }
+                        }
+                        attempts++;
+                    } while (overlap && attempts < 100);
+
+                    positions.push({x, y});
+                    d.style.left = x + "px";
+                    d.style.top = y + "px";
+                    
+                    d.onclick = (e) => {
+                        e.stopPropagation();
                         if(parseInt(d.innerText) === this.cur) {
                             d.style.opacity = "0";
-                            setTimeout(() => d.remove(), 100);
+                            d.style.pointerEvents = "none";
                             this.cur++;
                             if(this.cur > dotCount) this.end('SUCCESS');
                         } else {
@@ -95,17 +172,25 @@
                     container.appendChild(d);
                 }
             }
+
             end(res) {
-                this.isPlaying = false; clearInterval(this.gameTimer);
+                this.isPlaying = false; 
+                clearInterval(this.gameTimer);
                 document.getElementById('overlay').style.display = 'flex';
-                document.getElementById('title').innerText = res;
+                document.getElementById('title').innerText = res === 'SUCCESS' ? 'CLEARED!' : 'GAME OVER';
+                
                 if(res === 'SUCCESS') {
-                    this.brains += (dotCount * 5); 
+                    const reward = (dotCount * 5);
+                    this.brains += reward; 
                     localStorage.setItem('bt_coins', this.brains);
                     document.getElementById('cur-brains').innerText = this.brains;
+                    document.getElementById('message').innerHTML = `Gained <span style="color:var(--brain)">+${reward}</span> brains!<br>Try more dots?`;
+                } else {
+                    document.getElementById('message').innerText = "Too slow or wrong order!";
                 }
             }
         }
+
         const game = new DotGame();
     </script>
 </body>
