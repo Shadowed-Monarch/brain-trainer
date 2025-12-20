@@ -11,67 +11,78 @@
         header { width: 100%; max-width: 1100px; padding: 20px; display: flex; justify-content: space-between; align-items: center; box-sizing: border-box; }
         
         /* Rank Progress Bar */
-        .rank-container { width: 100%; max-width: 400px; background: #111; padding: 15px; border-radius: 15px; border: 1px solid #222; margin-bottom: 20px; text-align: center; }
-        .rank-title { font-weight: bold; color: var(--accent); font-size: 1.2rem; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px; }
-        .progress-bg { width: 100%; height: 10px; background: #222; border-radius: 5px; overflow: hidden; margin-top: 10px; }
-        .progress-fill { height: 100%; background: var(--accent); width: 0%; transition: width 0.5s ease; box-shadow: 0 0 10px var(--accent); }
-        .next-rank { font-size: 0.8rem; color: #666; margin-top: 5px; }
+        .rank-container { width: 90%; max-width: 450px; background: #111; padding: 20px; border-radius: 20px; border: 1px solid #222; margin-bottom: 20px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+        .rank-header { display: flex; justify-content: center; align-items: center; gap: 10px; margin-bottom: 10px; }
+        #rank-icon { font-size: 2rem; }
+        .rank-title { font-weight: bold; color: var(--accent); font-size: 1.3rem; text-transform: uppercase; letter-spacing: 2px; }
+        
+        .progress-bg { width: 100%; height: 12px; background: #222; border-radius: 6px; overflow: hidden; margin-top: 10px; }
+        .progress-fill { height: 100%; background: var(--accent); width: 0%; transition: width 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow: 0 0 15px var(--accent); }
+        .next-rank { font-size: 0.85rem; color: #777; margin-top: 8px; font-weight: 500; }
 
         .brain-display { background: rgba(255, 119, 255, 0.1); padding: 8px 18px; border-radius: 12px; color: var(--brain); font-weight: bold; border: 2px solid var(--brain); display: flex; align-items: center; gap: 10px; }
         
         .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; width: 90%; max-width: 1100px; padding: 20px; }
-        .card { background: var(--panel); border: 2px solid #1a1a1a; border-radius: 20px; padding: 25px; text-align: center; transition: 0.3s; text-decoration: none; color: white; }
-        .card:hover { border-color: var(--accent); transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.5); }
+        .card { background: var(--panel); border: 2px solid #1a1a1a; border-radius: 25px; padding: 30px; text-align: center; transition: 0.3s; text-decoration: none; color: white; display: flex; flex-direction: column; align-items: center; }
+        .card:hover { border-color: var(--accent); transform: translateY(-8px); box-shadow: 0 12px 25px rgba(0,0,0,0.6); }
+        .card-icon { font-size: 3.5rem; margin-bottom: 15px; }
         
-        .btn { display: inline-block; margin-top: 15px; padding: 10px 25px; background: var(--accent); color: white; border-radius: 25px; font-weight: bold; text-decoration: none; }
+        .btn { display: inline-block; margin-top: 20px; padding: 12px 30px; background: var(--accent); color: white; border-radius: 30px; font-weight: bold; text-decoration: none; font-size: 0.9rem; }
         
-        #shop-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.9); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 100; }
+        #shop-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.95); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 100; }
         .shop-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-top: 20px; }
-        .shop-item { width: 60px; height: 60px; border-radius: 50%; cursor: pointer; border: 3px solid transparent; }
+        .shop-item { width: 65px; height: 65px; border-radius: 50%; cursor: pointer; border: 3px solid transparent; transition: 0.2s; position: relative; }
+        .shop-item:hover { transform: scale(1.1); }
     </style>
 </head>
 <body>
 
     <header>
-        <div style="font-size: 1.5rem; font-weight: bold;">BRAIN<span style="color:var(--accent)">TRAIN</span></div>
+        <div style="font-size: 1.6rem; font-weight: bold; letter-spacing: -1px;">BRAIN<span style="color:var(--accent)">TRAIN</span></div>
         <div class="brain-display">
-            <img src="https://img.icons8.com/fluency/48/brain.png" style="width:24px;">
+            <span style="font-size: 1.4rem;">🧠</span>
             <span id="brains">0</span>
         </div>
     </header>
 
     <div class="rank-container">
-        <div id="rank-name" class="rank-title">STUDENT</div>
+        <div class="rank-header">
+            <span id="rank-icon">🎓</span>
+            <div id="rank-name" class="rank-title">STUDENT</div>
+        </div>
         <div class="progress-bg">
             <div id="rank-progress" class="progress-fill"></div>
         </div>
-        <div id="next-rank-info" class="next-rank">Next: Scholar at 500</div>
+        <div id="next-rank-info" class="next-rank">Next Rank at 500</div>
     </div>
 
     <div class="grid">
         <a href="math.html" class="card">
-            <h2 style="color:var(--accent)">Math Train</h2>
-            <p>Solve equations to keep the train moving.</p>
-            <div class="btn">PLAY</div>
+            <div class="card-icon">➕</div>
+            <h2 style="color:var(--accent); margin: 5px 0;">Math Train</h2>
+            <p style="color: #aaa; font-size: 0.9rem;">Solve equations before the train reaches the end.</p>
+            <div class="btn">START TRAINING</div>
         </a>
         <a href="grammar.html" class="card">
-            <h2 style="color:var(--accent)">Grammar Train</h2>
-            <p>Find opposites to clear the tracks.</p>
-            <div class="btn">PLAY</div>
+            <div class="card-icon">📖</div>
+            <h2 style="color:var(--accent); margin: 5px 0;">Grammar Train</h2>
+            <p style="color: #aaa; font-size: 0.9rem;">Master vocabulary and opposites to win.</p>
+            <div class="btn">START TRAINING</div>
         </a>
         <a href="dots.html" class="card">
-            <h2 style="color:var(--accent)">Dots Reflex</h2>
-            <p>Click dots in order before time runs out.</p>
-            <div class="btn">PLAY</div>
+            <div class="card-icon">🎯</div>
+            <h2 style="color:var(--accent); margin: 5px 0;">Dots Reflex</h2>
+            <p style="color: #aaa; font-size: 0.9rem;">Test your speed and precision by clicking dots.</p>
+            <div class="btn">START TRAINING</div>
         </a>
     </div>
 
-    <button onclick="toggleShop()" style="margin-top:20px; background:none; border:1px solid #444; color:#888; padding:8px 20px; border-radius:20px; cursor:pointer;">OPEN SHOP</button>
+    <button onclick="toggleShop()" style="margin: 20px 0 40px 0; background:none; border:1px solid #333; color:#666; padding:10px 25px; border-radius:25px; cursor:pointer; font-weight: bold; transition: 0.3s;">🎨 OPEN SKIN SHOP</button>
 
     <div id="shop-overlay">
-        <h2>SKIN SHOP</h2>
+        <h2 style="letter-spacing: 2px;">SKIN SHOP</h2>
         <div class="shop-grid" id="shop-grid"></div>
-        <button onclick="toggleShop()" style="margin-top:30px; color:white; background:none; border:none; cursor:pointer;">CLOSE</button>
+        <button onclick="toggleShop()" style="margin-top:40px; color:#555; background:none; border:1px solid #444; padding: 10px 30px; border-radius: 20px; cursor:pointer;">CLOSE</button>
     </div>
 
     <script>
@@ -87,37 +98,37 @@
             {id:'purple', hex:'#9900ff', cost:5000}
         ];
 
-        // RANK DEFINITIONS
+        // RANK DEFINITIONS WITH ICONS
         const ranks = [
-            { name: "Student", min: 0, next: 500 },
-            { name: "Scholar", min: 500, next: 2000 },
-            { name: "Genius", min: 2000, next: 5000 },
-            { name: "Mastermind", min: 5000, next: 10000 },
-            { name: "Brain Overlord", min: 10000, next: 999999 }
+            { name: "Student", min: 0, next: 500, icon: "🎓" },
+            { name: "Scholar", min: 500, next: 2000, icon: "📜" },
+            { name: "Genius", min: 2000, next: 5000, icon: "💡" },
+            { name: "Mastermind", min: 5000, next: 10000, icon: "👑" },
+            { name: "Brain Overlord", min: 10000, next: 999999, icon: "🌌" }
         ];
 
         function updateUI() {
             document.getElementById('brains').innerText = userBrains;
             
-            // Update Rank Logic
+            // Rank Logic
             let currentRank = ranks[0];
             for (let r of ranks) {
                 if (userBrains >= r.min) currentRank = r;
             }
             
             document.getElementById('rank-name').innerText = currentRank.name;
+            document.getElementById('rank-icon').innerText = currentRank.icon;
             
-            // Progress calculation
             let progress = ((userBrains - currentRank.min) / (currentRank.next - currentRank.min)) * 100;
             document.getElementById('rank-progress').style.width = Math.min(progress, 100) + "%";
             
             if (currentRank.name === "Brain Overlord") {
                 document.getElementById('next-rank-info').innerText = "MAX RANK REACHED";
             } else {
-                document.getElementById('next-rank-info').innerText = `Next: ${ranks[ranks.indexOf(currentRank)+1].name} at ${currentRank.next}`;
+                let nextRank = ranks[ranks.indexOf(currentRank) + 1];
+                document.getElementById('next-rank-info').innerText = `Next: ${nextRank.name} at ${currentRank.next} 🧠`;
             }
 
-            // Update Accent Color
             const skin = colors.find(c => c.id === currentSkin);
             document.documentElement.style.setProperty('--accent', skin.hex);
             renderShop();
@@ -129,7 +140,7 @@
                 const el = document.createElement('div');
                 el.className = 'shop-item'; el.style.background = c.hex;
                 if(!unlocked.includes(c.id)) {
-                    el.innerHTML = `<span style="color:#000; font-size:10px; display:flex; justify-content:center; align-items:center; height:100%; font-weight:bold;">${c.cost}</span>`;
+                    el.innerHTML = `<span style="color:#000; font-size:11px; display:flex; justify-content:center; align-items:center; height:100%; font-weight:bold;">${c.cost}</span>`;
                     el.onclick = () => { 
                         if(userBrains >= c.cost) { 
                             userBrains -= c.cost; 
