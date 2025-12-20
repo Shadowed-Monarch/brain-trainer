@@ -10,7 +10,7 @@
         header { width: 100%; padding: 15px 25px; display: flex; justify-content: space-between; border-bottom: 2px solid var(--accent); align-items: center; background: #050505; box-sizing: border-box; }
         .brain-wrap { display: flex; align-items: center; gap: 8px; color: var(--brain); font-weight: bold; }
         #game-container { position: relative; width: 95%; max-width: 800px; height: 450px; background: #080808; border: 2px solid var(--accent); border-radius: 15px; margin-top: 20px; overflow: hidden; }
-        .bubble { position: absolute; background: var(--accent); padding: 12px 22px; border-radius: 30px; font-weight: bold; box-shadow: 0 0 15px var(--accent); text-align: center; min-width: 130px; white-space: nowrap; transition: transform 0.05s linear; }
+        .bubble { position: absolute; background: var(--accent); padding: 10px 20px; border-radius: 30px; font-weight: bold; box-shadow: 0 0 15px var(--accent); text-align: center; min-width: 130px; white-space: nowrap; transition: transform 0.05s linear; height: 60px; display: flex; flex-direction: column; justify-content: center; z-index: 5; }
         .bubble span { display: block; font-size: 0.65rem; opacity: 0.9; margin-bottom: 2px; }
         #ans { padding: 15px; width: 80%; max-width: 320px; margin-top: 25px; background: #111; border: 2px solid var(--accent); color: #fff; border-radius: 12px; font-size: 22px; text-align: center; outline: none; }
         #overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.95); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 10; text-align: center; }
@@ -28,9 +28,9 @@
             <h2>GRAMMAR TRAIN</h2>
             <p>Select max questions on screen:</p>
             <div>
-                <button class="diff-btn active" onclick="setLimit(1, 1.0, this)">1 (Normal)</button>
-                <button class="diff-btn" onclick="setLimit(2, 0.7, this)">2 (Slow)</button>
-                <button class="diff-btn" onclick="setLimit(3, 0.5, this)">3 (Slower)</button>
+                <button class="diff-btn active" onclick="setLimit(1, 0.5, this)">1 (Slow)</button>
+                <button class="diff-btn" onclick="setLimit(2, 0.35, this)">2 (Slower)</button>
+                <button class="diff-btn" onclick="setLimit(3, 0.25, this)">3 (Slowest)</button>
             </div>
             <button onclick="game.start()" style="margin-top:20px; padding:12px 50px; background:var(--accent); border:none; color:white; border-radius:30px; font-weight:bold; cursor:pointer;">START</button>
         </div>
@@ -38,7 +38,7 @@
     <input type="text" id="ans" placeholder="Type opposite..." autocomplete="off">
 
     <script>
-        let maxB = 1, baseS = 1.0;
+        let maxB = 1, baseS = 0.5;
         function setLimit(n, s, btn) {
             maxB = n; baseS = s;
             document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('active'));
@@ -67,24 +67,24 @@
                 document.getElementById('overlay').style.display = 'none';
                 document.getElementById('ans').focus();
                 this.loop();
-                this.spawnInt = setInterval(() => { if(this.active.length < maxB && this.levelBank.length > 0) this.spawn(); }, 2000);
+                this.spawnInt = setInterval(() => { if(this.active.length < maxB && this.levelBank.length > 0) this.spawn(); }, 2500);
             }
             spawn() {
                 const item = this.levelBank.pop();
                 const el = document.createElement('div'); el.className = 'bubble'; el.innerHTML = `<span>Opposite of:</span>${item.q}`;
                 
-                // Fixed Vertical Spacing
                 let topPos;
                 let isTooClose;
                 let attempts = 0;
                 do {
                     isTooClose = false;
-                    topPos = Math.random() * 300 + 40;
+                    // Grammar bubbles are tall, so we limit spawn strictly between 60px and 330px
+                    topPos = Math.floor(Math.random() * 270) + 60; 
                     for(let b of this.active) {
-                        if(Math.abs(topPos - b.y) < 70) isTooClose = true; 
+                        if(Math.abs(topPos - b.y) < 95) isTooClose = true; 
                     }
                     attempts++;
-                } while(isTooClose && attempts < 10);
+                } while(isTooClose && attempts < 15);
 
                 el.style.top = topPos + 'px';
                 document.getElementById('game-container').appendChild(el);
