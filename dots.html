@@ -2,100 +2,107 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Dot Speed</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dots Train</title>
     <style>
-        :root { --bg: #000; --accent: #f00; --text: #fff; }
-        body { font-family: sans-serif; background: var(--bg); color: var(--text); margin: 0; display: flex; flex-direction: column; align-items: center; height: 100vh; overflow: hidden; }
-        header { width: 100%; padding: 10px; display: flex; justify-content: space-between; border-bottom: 2px solid var(--accent); box-sizing: border-box; align-items: center; }
-        .back-btn { text-decoration: none; color: #fff; border: 1px solid #fff; padding: 5px 10px; border-radius: 5px; }
-        #level-menu { width: 95%; max-width: 600px; display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 20px; overflow-y: auto; height: 80vh; }
-        .lvl-btn { width: 50px; height: 50px; border-radius: 10px; border: 2px solid #444; background: #111; color: #fff; cursor: pointer; font-weight: bold; }
-        .lvl-btn.unlocked { border-color: var(--accent); }
-        #game-area { display: none; width: 100%; height: 100%; flex-direction: column; align-items: center; }
-        #game-container { position: relative; width: 95%; max-width: 800px; height: 500px; background: #080808; border: 2px solid var(--accent); border-radius: 10px; margin-top: 20px; }
-        .dot { position: absolute; width: 50px; height: 50px; border-radius: 50%; background: var(--accent); border: 2px solid #fff; display: flex; align-items: center; justify-content: center; font-weight: bold; cursor: pointer; user-select: none; }
-        #overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.9); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 10; }
-        #overlay button { padding: 10px 30px; background: var(--accent); border: none; color: #fff; font-weight: bold; border-radius: 5px; cursor: pointer; }
+        :root { --bg: #000; --accent: #f00; --brain: #ff77ff; }
+        body { font-family: sans-serif; background: var(--bg); color: #fff; margin: 0; display: flex; flex-direction: column; align-items: center; height: 100vh; overflow: hidden; }
+        header { width: 100%; padding: 15px 25px; display: flex; justify-content: space-between; border-bottom: 2px solid var(--accent); align-items: center; background: #050505; box-sizing: border-box; }
+        .brain-wrap { display: flex; align-items: center; gap: 8px; color: var(--brain); font-weight: bold; }
+        #game-container { position: relative; width: 95%; max-width: 800px; height: 500px; background: #080808; border: 2px solid var(--accent); border-radius: 15px; margin-top: 20px; cursor: crosshair; }
+        .dot { position: absolute; width: 55px; height: 55px; border-radius: 50%; background: var(--accent); border: 2px solid #fff; display: flex; align-items: center; justify-content: center; font-weight: bold; cursor: pointer; user-select: none; box-shadow: 0 0 15px var(--accent); font-size: 1.2rem; transition: transform 0.1s; }
+        .dot:active { transform: scale(0.9); }
+        #overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.92); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 10; text-align: center; }
+        .diff-btn { padding: 10px 20px; margin: 5px; border: 1px solid #444; background: #222; color: white; cursor: pointer; border-radius: 8px; }
+        .diff-btn.active { border-color: var(--accent); background: var(--accent); }
+        #timer-bar-container { width: 100%; height: 5px; background: #222; position: absolute; bottom: 0; }
+        #timer-bar { height: 100%; background: var(--accent); width: 100%; }
     </style>
 </head>
 <body>
     <header>
-        <a href="index.html" class="back-btn">⬅ HUB</a>
-        <div>Lvl: <span id="cur-lvl">-</span> | ⏳ <span id="timer">30</span> | 🪙 <span id="cur-coins">0</span></div>
+        <a href="index.html" style="color:white; text-decoration:none; border:1px solid #fff; padding:5px 12px; border-radius:5px;">HOME</a>
+        <div class="brain-wrap">
+            <span style="margin-right:15px; color:#aaa;">TIME: <span id="time-text">10.0</span>s</span>
+            <img src="https://img.icons8.com/fluency/48/brain.png" style="width:22px;"> <span id="cur-brains">0</span>
+        </div>
     </header>
-    <div id="level-menu"></div>
-    <div id="game-area">
-        <div id="game-container">
-            <div id="overlay">
-                <h2 id="title">LEVEL 1</h2>
-                <button onclick="game.start()">START</button>
+
+    <div id="game-container">
+        <div id="timer-bar-container"><div id="timer-bar"></div></div>
+        <div id="overlay">
+            <h2 id="title">DOTS REFLEX</h2>
+            <p>Click dots in numerical order!<br>Select amount of dots:</p>
+            <div>
+                <button class="diff-btn active" onclick="setLimit(5, this)">5 Dots</button>
+                <button class="diff-btn" onclick="setLimit(10, this)">10 Dots</button>
+                <button class="diff-btn" onclick="setLimit(15, this)">15 Dots</button>
             </div>
+            <button onclick="game.start()" style="margin-top:20px; padding:12px 50px; background:var(--accent); border:none; color:white; border-radius:30px; font-weight:bold; cursor:pointer;">START</button>
         </div>
     </div>
+
     <script>
+        let dotCount = 5;
+        function setLimit(n, btn) {
+            dotCount = n;
+            document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+        }
+
         class DotGame {
             constructor() {
-                this.max = parseInt(localStorage.getItem('bt_dots_max_lvl')) || 1;
-                this.coins = parseInt(localStorage.getItem('bt_coins')) || 0;
+                this.brains = parseInt(localStorage.getItem('bt_coins')) || 0;
                 this.skin = localStorage.getItem('bt_current_skin') || 'red';
-                this.applyTheme(); this.renderMenu();
-                document.getElementById('cur-coins').innerText = this.coins;
+                this.applyTheme();
+                document.getElementById('cur-brains').innerText = this.brains;
             }
             applyTheme() {
-                const c = {red:'#f00', blue:'#08f', yellow:'#fc0', green:'#0f0', purple:'#90f', cyan:'#0ff'};
+                const c = {red:'#f00', blue:'#08f', yellow:'#fc0', green:'#0f0', purple:'#90f'};
                 document.documentElement.style.setProperty('--accent', c[this.skin] || '#fff');
             }
-            renderMenu() {
-                const m = document.getElementById('level-menu'); m.innerHTML = '';
-                for(let i=1; i<=this.max+1; i++) {
-                    const b = document.createElement('button'); b.className = 'lvl-btn'; b.innerText = i;
-                    if(i <= this.max) { b.classList.add('unlocked'); b.onclick = () => this.select(i); }
-                    else b.classList.add('locked'); m.appendChild(b);
-                }
-            }
-            select(l) {
-                this.lvl = l; document.getElementById('level-menu').style.display = 'none';
-                document.getElementById('game-area').style.display = 'flex';
-                document.getElementById('cur-lvl').innerText = l;
-                document.getElementById('title').innerText = "LEVEL " + l;
-            }
             start() {
+                this.isPlaying = true; this.cur = 1;
+                this.timeLeft = 10.0;
                 document.getElementById('overlay').style.display = 'none';
-                this.timeLeft = 30; this.cur = 1; this.total = 5 + Math.floor(this.lvl/2);
                 this.spawnDots();
-                this.timer = setInterval(() => {
-                    this.timeLeft--; document.getElementById('timer').innerText = this.timeLeft;
+                
+                this.gameTimer = setInterval(() => {
+                    this.timeLeft -= 0.1;
+                    document.getElementById('time-text').innerText = this.timeLeft.toFixed(1);
+                    document.getElementById('timer-bar').style.width = (this.timeLeft / 10 * 100) + "%";
                     if(this.timeLeft <= 0) this.end('FAIL');
-                }, 1000);
+                }, 100);
             }
             spawnDots() {
-                const c = document.getElementById('game-container');
-                c.querySelectorAll('.dot').forEach(d => d.remove());
-                for(let i=1; i<=this.total; i++) {
-                    const d = document.createElement('div'); d.className = 'dot'; d.innerText = i;
-                    d.style.left = Math.random()*700+'px'; d.style.top = Math.random()*400+'px';
+                const container = document.getElementById('game-container');
+                container.querySelectorAll('.dot').forEach(d => d.remove());
+                for(let i=1; i<=dotCount; i++) {
+                    const d = document.createElement('div');
+                    d.className = 'dot'; d.innerText = i;
+                    d.style.left = Math.random() * (container.offsetWidth - 60) + "px";
+                    d.style.top = Math.random() * (container.offsetHeight - 80) + "px";
                     d.onclick = () => {
-                        if(parseInt(d.innerText) === this.cur) { d.remove(); this.cur++; if(this.cur > this.total) this.end('SUCCESS'); }
-                        else this.end('FAIL');
+                        if(parseInt(d.innerText) === this.cur) {
+                            d.style.opacity = "0";
+                            setTimeout(() => d.remove(), 100);
+                            this.cur++;
+                            if(this.cur > dotCount) this.end('SUCCESS');
+                        } else {
+                            this.end('FAIL');
+                        }
                     };
-                    c.appendChild(d);
+                    container.appendChild(d);
                 }
             }
             end(res) {
-                clearInterval(this.timer);
-                const o = document.getElementById('overlay'); o.style.display = 'flex';
+                this.isPlaying = false; clearInterval(this.gameTimer);
+                document.getElementById('overlay').style.display = 'flex';
                 document.getElementById('title').innerText = res;
                 if(res === 'SUCCESS') {
-                    if(this.lvl === this.max) { this.max++; localStorage.setItem('bt_dots_max_lvl', this.max); }
-                    let reward = (this.lvl === 1 && this.max === 2) || this.lvl % 10 === 0 ? 100 : 10;
-                    this.coins += reward; localStorage.setItem('bt_coins', this.coins);
-                    document.getElementById('cur-coins').innerText = this.coins;
-                    o.querySelector('button').innerText = "NEXT LEVEL";
-                    o.querySelector('button').onclick = () => { this.select(this.lvl+1); this.start(); };
-                } else {
-                    o.querySelector('button').innerText = "RETRY";
-                    o.querySelector('button').onclick = () => this.start();
+                    this.brains += (dotCount * 5); 
+                    localStorage.setItem('bt_coins', this.brains);
+                    document.getElementById('cur-brains').innerText = this.brains;
                 }
             }
         }
