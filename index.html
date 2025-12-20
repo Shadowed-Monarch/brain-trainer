@@ -7,156 +7,83 @@
     <style>
         :root { --bg: #000; --panel: #0a0a0a; --text: #fff; --accent: #ff0000; --brain: #ff77ff; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
-        header { width: 100%; max-width: 1100px; padding: 20px; display: flex; justify-content: space-between; align-items: center; box-sizing: border-box; }
+        header { width: 100%; max-width: 1100px; padding: 30px 20px; display: flex; justify-content: space-between; align-items: center; box-sizing: border-box; }
         .brain-display { background: rgba(255, 119, 255, 0.1); padding: 8px 18px; border-radius: 12px; color: var(--brain); font-weight: bold; border: 2px solid var(--brain); display: flex; align-items: center; gap: 10px; }
-        .nav-btns { display: flex; gap: 10px; }
-        .nav-btn { background: #222; border: 1px solid #444; color: white; padding: 8px 15px; border-radius: 8px; cursor: pointer; }
-        
-        .hero { text-align: center; padding: 20px; }
-        .games-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; width: 90%; max-width: 1100px; margin-bottom: 40px; }
-        .game-card { background: var(--panel); border: 2px solid var(--accent); border-radius: 20px; padding: 30px 20px; text-align: center; text-decoration: none; color: white; transition: 0.3s; position: relative; }
+        .hero { text-align: center; padding: 60px 20px; }
+        .games-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 25px; width: 90%; max-width: 1100px; margin-bottom: 50px; }
+        .game-card { background: var(--panel); border: 2px solid var(--accent); border-radius: 20px; padding: 40px 20px; text-align: center; text-decoration: none; color: white; transition: 0.3s; }
         .game-card:hover { transform: translateY(-5px); box-shadow: 0 0 20px var(--accent); }
-        .lvl-badge { position: absolute; top: 10px; right: 10px; background: var(--accent); padding: 2px 10px; border-radius: 10px; font-size: 0.8rem; }
-
-        #overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 100; display: none; flex-direction: column; align-items: center; justify-content: center; overflow-y: auto; padding: 20px; }
-        .shop-sec { margin-bottom: 30px; text-align: center; }
-        .item-grid { display: flex; flex-wrap: wrap; gap: 15px; justify-content: center; margin-top: 10px; }
-        .shop-item { width: 70px; height: 70px; border-radius: 10px; border: 2px solid #333; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 10px; position: relative; }
-        .shop-item.selected { border-color: #fff; box-shadow: 0 0 10px #fff; }
+        .shop-btn { background: #222; color: white; border: 1px solid #444; padding: 10px 20px; border-radius: 10px; cursor: pointer; margin-top: 20px; }
+        #shop-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.9); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 100; }
+        .shop-grid { display: grid; grid-template-columns: repeat(3, 80px); gap: 15px; margin-top: 20px; }
+        .shop-item { width: 80px; height: 80px; border-radius: 15px; cursor: pointer; border: 2px solid transparent; }
     </style>
 </head>
 <body>
     <header>
-        <div class="nav-btns">
-            <button class="nav-btn" onclick="openOverlay('shop')">🛒 SHOP</button>
-            <button class="nav-btn" onclick="openOverlay('levels')">🏆 LEVELS</button>
-        </div>
-        <div class="brain-display">
-            <img src="https://img.icons8.com/fluency/48/brain.png" width="24">
-            <span id="brains">0</span>
-        </div>
+        <div style="font-size: 1.5rem; font-weight: 900; letter-spacing: 2px;">BRAIN TRAIN</div>
+        <div class="brain-display">🧠 <span id="brains">0</span></div>
     </header>
 
-    <div class="hero"><h1>BRAIN TRAIN</h1><p>Level up your intelligence.</p></div>
-
-    <div class="games-grid">
-        <a href="math.html" class="game-card"><h3>MATH</h3><p>Current Level: <span id="math-lvl-txt">1</span></p></a>
-        <a href="grammar.html" class="game-card"><h3>GRAMMAR</h3><p>Current Level: <span id="gram-lvl-txt">1</span></p></a>
-        <a href="dots.html" class="game-card"><h3>DOTS</h3><p>Current Level: <span id="dots-lvl-txt">1</span></p></a>
+    <div class="hero">
+        <h1>TRAIN YOUR BRAIN</h1>
+        <button class="shop-btn" onclick="toggleShop()">🛒 COLOR SHOP</button>
     </div>
 
-    <div id="overlay">
-        <div id="shop-content" style="display:none">
-            <h2>THEME & VEHICLE SHOP</h2>
-            <div class="shop-sec">
-                <h3>Colors</h3>
-                <div class="item-grid" id="color-grid"></div>
-            </div>
-            <div class="shop-sec">
-                <h3>Vehicles</h3>
-                <div class="item-grid" id="vehicle-grid"></div>
-            </div>
-        </div>
-        <div id="level-content" style="display:none">
-            <h2>SELECT LEVEL</h2>
-            <p>Complete levels to unlock the next!</p>
-            <div class="item-grid" id="level-selector"></div>
-        </div>
-        <button onclick="closeOverlay()" style="padding:10px 40px; background:var(--accent); border:none; color:white; border-radius:20px; cursor:pointer; margin-top:20px;">BACK</button>
+    <div class="games-grid">
+        <a href="math.html" class="game-card"><h2>MATH</h2><p>Addition & Speed</p></a>
+        <a href="grammar.html" class="game-card"><h2>GRAMMAR</h2><p>Opposites</p></a>
+        <a href="dots.html" class="game-card"><h2>DOTS</h2><p>Reflex Test</p></a>
+    </div>
+
+    <div id="shop-overlay">
+        <h2>SELECT THEME</h2>
+        <div class="shop-grid" id="shop-grid"></div>
+        <button onclick="toggleShop()" style="margin-top:30px; padding:10px 30px;">CLOSE</button>
     </div>
 
     <script>
-        const shopData = {
-            colors: [
-                { id: 'red', hex: '#ff0000', cost: 0 }, { id: 'blue', hex: '#0088ff', cost: 0 },
-                { id: 'green', hex: '#00ff00', cost: 200 }, { id: 'purple', hex: '#9900ff', cost: 300 },
-                { id: 'orange', hex: '#ff6600', cost: 400 }, { id: 'pink', hex: '#ff33aa', cost: 500 }
-            ],
-            vehicles: [
-                { id: 'box', name: 'Square', cost: 0, icon: '⬜' },
-                { id: 'car', name: 'Race Car', cost: 500, icon: '🏎️' },
-                { id: 'rocket', name: 'Rocket', cost: 1000, icon: '🚀' }
-            ]
-        };
+        let userBrains = parseInt(localStorage.getItem('bt_coins')) || 0;
+        let unlocked = JSON.parse(localStorage.getItem('bt_skins')) || ['red'];
+        let currentSkin = localStorage.getItem('bt_current_skin') || 'red';
 
-        let data = {
-            brains: parseInt(localStorage.getItem('bt_coins')) || 0,
-            unlockedColors: JSON.parse(localStorage.getItem('bt_skins')) || ['red', 'blue'],
-            unlockedVehicles: JSON.parse(localStorage.getItem('bt_vehicles')) || ['box'],
-            currentSkin: localStorage.getItem('bt_current_skin') || 'red',
-            currentVehicle: localStorage.getItem('bt_current_vehicle') || 'box',
-            maxLevel: parseInt(localStorage.getItem('bt_max_level')) || 1
-        };
-
-        function openOverlay(type) {
-            document.getElementById('overlay').style.display = 'flex';
-            document.getElementById('shop-content').style.display = type === 'shop' ? 'block' : 'none';
-            document.getElementById('level-content').style.display = type === 'levels' ? 'block' : 'none';
-            if(type === 'shop') renderShop();
-            else renderLevels();
-        }
-        function closeOverlay() { document.getElementById('overlay').style.display = 'none'; }
-
-        function renderShop() {
-            const cGrid = document.getElementById('color-grid'); cGrid.innerHTML = '';
-            shopData.colors.forEach(c => {
-                const isOwned = data.unlockedColors.includes(c.id);
-                const el = document.createElement('div');
-                el.className = `shop-item ${data.currentSkin === c.id ? 'selected' : ''}`;
-                el.style.background = c.hex;
-                el.innerHTML = isOwned ? '' : `<span>${c.cost}</span>`;
-                el.onclick = () => {
-                    if(isOwned) { data.currentSkin = c.id; localStorage.setItem('bt_current_skin', c.id); }
-                    else if(data.brains >= c.cost) {
-                        data.brains -= c.cost; data.unlockedColors.push(c.id);
-                        localStorage.setItem('bt_coins', data.brains);
-                        localStorage.setItem('bt_skins', JSON.stringify(data.unlockedColors));
-                    }
-                    updateUI(); renderShop();
-                };
-                cGrid.appendChild(el);
-            });
-
-            const vGrid = document.getElementById('vehicle-grid'); vGrid.innerHTML = '';
-            shopData.vehicles.forEach(v => {
-                const isOwned = data.unlockedVehicles.includes(v.id);
-                const el = document.createElement('div');
-                el.className = `shop-item ${data.currentVehicle === v.id ? 'selected' : ''}`;
-                el.innerHTML = `<div style="font-size:24px">${v.icon}</div>${isOwned ? '' : '<span>'+v.cost+'</span>'}`;
-                el.onclick = () => {
-                    if(isOwned) { data.currentVehicle = v.id; localStorage.setItem('bt_current_vehicle', v.id); }
-                    else if(data.brains >= v.cost) {
-                        data.brains -= v.cost; data.unlockedVehicles.push(v.id);
-                        localStorage.setItem('bt_coins', data.brains);
-                        localStorage.setItem('bt_vehicles', JSON.stringify(data.unlockedVehicles));
-                    }
-                    updateUI(); renderShop();
-                };
-                vGrid.appendChild(el);
-            });
-        }
-
-        function renderLevels() {
-            const grid = document.getElementById('level-selector'); grid.innerHTML = '';
-            for(let i=1; i <= data.maxLevel + 1; i++) {
-                const el = document.createElement('div');
-                el.className = 'shop-item';
-                el.style.background = i <= data.maxLevel ? 'var(--accent)' : '#333';
-                el.innerHTML = `<span style="font-size:18px">${i}</span>`;
-                if(i <= data.maxLevel) {
-                    el.onclick = () => { localStorage.setItem('bt_target_level', i); alert("Level " + i + " selected for your next game!"); closeOverlay(); };
-                } else { el.style.opacity = "0.5"; el.style.cursor = "not-allowed"; }
-                grid.appendChild(el);
-            }
-        }
+        const colors = [
+            {id:'red', hex:'#ff0000', cost:0}, {id:'blue', hex:'#0088ff', cost:100},
+            {id:'green', hex:'#00ff00', cost:200}, {id:'purple', hex:'#9900ff', cost:300}
+        ];
 
         function updateUI() {
-            document.getElementById('brains').innerText = data.brains;
-            document.getElementById('math-lvl-txt').innerText = data.maxLevel;
-            document.getElementById('gram-lvl-txt').innerText = data.maxLevel;
-            document.getElementById('dots-lvl-txt').innerText = data.maxLevel;
-            const skin = shopData.colors.find(c => c.id === data.currentSkin);
+            document.getElementById('brains').innerText = userBrains;
+            const skin = colors.find(c => c.id === currentSkin);
             document.documentElement.style.setProperty('--accent', skin.hex);
+            renderShop();
+        }
+
+        function renderShop() {
+            const grid = document.getElementById('shop-grid'); grid.innerHTML = '';
+            colors.forEach(c => {
+                const el = document.createElement('div');
+                el.className = 'shop-item'; el.style.background = c.hex;
+                if(currentSkin === c.id) el.style.borderColor = "white";
+                el.onclick = () => {
+                    if(!unlocked.includes(c.id)) {
+                        if(userBrains >= c.cost) {
+                            userBrains -= c.cost; unlocked.push(c.id);
+                            localStorage.setItem('bt_coins', userBrains);
+                            localStorage.setItem('bt_skins', JSON.stringify(unlocked));
+                        }
+                    } else {
+                        currentSkin = c.id; localStorage.setItem('bt_current_skin', c.id);
+                    }
+                    updateUI();
+                };
+                grid.appendChild(el);
+            });
+        }
+
+        function toggleShop() {
+            const s = document.getElementById('shop-overlay');
+            s.style.display = (s.style.display === 'flex') ? 'none' : 'flex';
         }
         updateUI();
     </script>
