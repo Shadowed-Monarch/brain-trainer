@@ -53,14 +53,18 @@
             initMenu() {
                 const grid = document.getElementById('lvl-grid'); grid.innerHTML = '';
                 const btnContainer = document.getElementById('btn-container');
-                btnContainer.innerHTML = ''; // Clear Next/Retry buttons
+                btnContainer.innerHTML = ''; 
                 document.getElementById('main-start-btn').style.display = 'block';
+                document.getElementById('display-lvl').innerText = selectedLvl; // Updated this line
 
                 for (let i = 1; i <= 100; i++) {
                     const btn = document.createElement('button'); btn.innerText = i; btn.className = 'lvl-btn';
                     if (i <= this.unlockedLvl) {
                         btn.classList.add('unlocked');
-                        btn.onclick = () => { selectedLvl = i; this.initMenu(); document.getElementById('display-lvl').innerText = i; };
+                        btn.onclick = () => { 
+                            selectedLvl = i; 
+                            this.initMenu(); 
+                        };
                     }
                     if (i === selectedLvl) btn.classList.add('active');
                     grid.appendChild(btn);
@@ -140,7 +144,11 @@
                     const nextBtn = document.createElement('button');
                     nextBtn.className = 'game-btn';
                     nextBtn.innerText = "NEXT LEVEL";
-                    nextBtn.onclick = () => { selectedLvl++; this.initMenu(); this.start(); };
+                    nextBtn.onclick = () => { 
+                        selectedLvl++; 
+                        this.initMenu(); // This now updates the header
+                        this.start(); 
+                    };
                     btnContainer.appendChild(nextBtn);
                 } else { 
                     document.getElementById('m-title').innerText = "FAILED!"; 
