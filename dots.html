@@ -176,8 +176,9 @@
             end(res) {
                 this.isPlaying = false; 
                 clearInterval(this.gameTimer);
-                document.getElementById('overlay').style.display = 'flex';
-                document.getElementById('title').innerText = res === 'SUCCESS' ? 'CLEARED!' : 'GAME OVER';
+document.querySelectorAll('.dot').forEach(d => d.remove()); 
+
+    document.getElementById('overlay').style.display = 'flex';
                 
                 if(res === 'SUCCESS') {
                     const reward = (dotCount * 5);
