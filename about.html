@@ -73,7 +73,7 @@
     </div>
 
     <script>
-        // Apply the user's current skin color to the about page
+
         const currentSkin = localStorage.getItem('bt_current_skin') || 'red';
         const colors = { red:'#ff0000', blue:'#0088ff', yellow:'#ffcc00', green:'#00ff00', purple:'#9900ff' };
         document.documentElement.style.setProperty('--accent', colors[currentSkin]);
