@@ -55,6 +55,10 @@
                 this.unlockedLvl = parseInt(localStorage.getItem('bt_unlocked')) || 1;
                 this.isPlaying = false;
                 this.active = null;
+
+                // FIX: Apply the skin color when the game loads
+                this.applyTheme(); 
+                
                 this.initMenu();
                 this.updateUI();
             }
@@ -110,12 +114,11 @@
 
                 let a, b, q, ans;
                 
-                // Difficulty Scaling Logic
-                if (selectedLvl < 5) { // Level 1-4: Simple Addition
+                if (selectedLvl < 5) {
                     a = Math.floor(Math.random() * 10) + 1;
                     b = Math.floor(Math.random() * 10) + 1;
                     q = `${a}+${b}`; ans = a + b;
-                } else if (selectedLvl < 15) { // Level 5-14: Addition + Subtraction
+                } else if (selectedLvl < 15) {
                     if (Math.random() > 0.5) {
                         a = Math.floor(Math.random() * 20) + 5;
                         b = Math.floor(Math.random() * 10) + 1;
@@ -125,7 +128,7 @@
                         b = Math.floor(Math.random() * 15) + 5;
                         q = `${a}+${b}`; ans = a + b;
                     }
-                } else { // Level 15+: Intro Multiplication
+                } else {
                     let mode = Math.random();
                     if (mode < 0.33) {
                         a = Math.floor(Math.random() * 30) + 10;
@@ -149,7 +152,6 @@
                 el.style.left = "-110px";
                 document.getElementById('game-container').appendChild(el);
                 
-                // Slower Speed Scaling: Starts at 0.6, adds 0.05 per level
                 const speed = 0.6 + (selectedLvl * 0.05);
                 this.active = { el, x: -110, s: speed, ans: ans.toString() };
             }
@@ -174,9 +176,8 @@
                 const t = document.getElementById('m-title');
                 
                 if(win) {
-                    t.innerText = "LEVEL " + selectedLvl + " CLEAR!";
+                    t.innerText = "LEVEL CLEAR!";
                     this.brains += (selectedLvl * 10);
-                    // Unlock next level if it was the current highest
                     if (selectedLvl === this.unlockedLvl && selectedLvl < totalLevels) {
                         this.unlockedLvl++;
                         localStorage.setItem('bt_unlocked', this.unlockedLvl);
