@@ -7,105 +7,102 @@
     <style>
         :root { --bg: #000; --accent: #f00; --brain: #ff77ff; }
         body { font-family: sans-serif; background: var(--bg); color: #fff; margin: 0; display: flex; flex-direction: column; align-items: center; height: 100vh; overflow: hidden; }
-        header { width: 100%; padding: 15px 25px; display: flex; justify-content: space-between; border-bottom: 2px solid var(--accent); align-items: center; background: #050505; box-sizing: border-box; }
-        .brain-wrap { display: flex; align-items: center; gap: 8px; color: var(--brain); font-weight: bold; }
+        header { width: 100%; padding: 15px; display: flex; justify-content: space-between; border-bottom: 2px solid var(--accent); background: #050505; box-sizing: border-box; }
         #game-container { position: relative; width: 95%; max-width: 800px; height: 450px; background: #080808; border: 2px solid var(--accent); border-radius: 15px; margin-top: 20px; overflow: hidden; }
-        .bubble { position: absolute; background: var(--accent); padding: 10px 20px; border-radius: 30px; font-weight: bold; box-shadow: 0 0 15px var(--accent); text-align: center; min-width: 130px; white-space: nowrap; transition: transform 0.05s linear; height: 60px; display: flex; flex-direction: column; justify-content: center; z-index: 5; }
-        .bubble span { display: block; font-size: 0.65rem; opacity: 0.9; margin-bottom: 2px; }
+        
+        .bubble { position: absolute; padding: 10px; border-radius: 10px; font-weight: bold; transition: transform 0.05s linear; z-index: 5; display: flex; flex-direction: column; align-items: center; min-width: 120px; }
+        .vehicle-body { font-size: 30px; margin-bottom: -5px; }
+        .q-text { background: var(--accent); padding: 5px 12px; border-radius: 5px; box-shadow: 0 0 10px var(--accent); text-align: center; }
+        .q-text span { display: block; font-size: 0.6rem; opacity: 0.8; }
+
         #ans { padding: 15px; width: 80%; max-width: 320px; margin-top: 25px; background: #111; border: 2px solid var(--accent); color: #fff; border-radius: 12px; font-size: 22px; text-align: center; outline: none; }
         #overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.95); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 10; text-align: center; }
-        .diff-btn { padding: 10px 20px; margin: 5px; border: 1px solid #444; background: #222; color: white; cursor: pointer; border-radius: 8px; font-weight: bold; }
-        .diff-btn.active { border-color: var(--accent); background: var(--accent); }
     </style>
 </head>
 <body>
     <header>
-        <a href="index.html" style="color:white; text-decoration:none; border:1px solid #fff; padding:5px 12px; border-radius:5px; font-weight:bold;">HOME</a>
-        <div class="brain-wrap"><img src="https://img.icons8.com/fluency/48/brain.png" style="width:22px;"> <span id="cur-brains">0</span></div>
+        <a href="index.html" style="color:white; text-decoration:none; border:1px solid #fff; padding:5px 12px; border-radius:5px;">HOME</a>
+        <div id="lvl-display">Level: 1</div>
+        <div class="brain-wrap"><span id="cur-brains">0</span> 🧠</div>
     </header>
     <div id="game-container">
         <div id="overlay">
-            <h2>GRAMMAR TRAIN</h2>
-            <p>Select max questions on screen:</p>
-            <div>
-                <button class="diff-btn active" onclick="setLimit(1, 0.5, this)">1</button>
-                <button class="diff-btn" onclick="setLimit(2, 0.35, this)">2</button>
-                <button class="diff-btn" onclick="setLimit(3, 0.25, this)">3</button>
-            </div>
-            <button onclick="game.start()" style="margin-top:20px; padding:12px 50px; background:var(--accent); border:none; color:white; border-radius:30px; font-weight:bold; cursor:pointer;">START</button>
+            <h2 id="msg">GRAMMAR TRAIN</h2>
+            <p id="sub-msg">Type the opposite word!</p>
+            <button onclick="game.start()" style="padding:12px 50px; background:var(--accent); border:none; color:white; border-radius:30px; cursor:pointer; font-weight:bold;">START</button>
         </div>
     </div>
     <input type="text" id="ans" placeholder="Type opposite..." autocomplete="off">
 
     <script>
-        let maxB = 1, baseS = 0.5;
-        function setLimit(n, s, btn) {
-            maxB = n; baseS = s;
-            document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-        }
-
         class GrammarGame {
             constructor() {
                 this.brains = parseInt(localStorage.getItem('bt_coins')) || 0;
+                this.maxLvl = parseInt(localStorage.getItem('bt_max_level')) || 1;
+                this.lvl = parseInt(localStorage.getItem('bt_target_level')) || this.maxLvl;
                 this.skin = localStorage.getItem('bt_current_skin') || 'red';
+                this.vehicle = localStorage.getItem('bt_current_vehicle') || 'box';
                 this.fullBank = [
                     {q:"HOT", a:["cold", "chilly"]}, {q:"FAST", a:["slow", "sluggish"]},
                     {q:"BIG", a:["small", "tiny"]}, {q:"HAPPY", a:["sad", "unhappy"]},
                     {q:"RICH", a:["poor", "broke"]}, {q:"START", a:["end", "finish"]},
-                    {q:"CLEAN", a:["dirty", "messy"]}, {q:"STRONG", a:["weak", "feeble"]}
+                    {q:"CLEAN", a:["dirty", "messy"]}, {q:"STRONG", a:["weak", "feeble"]},
+                    {q:"HARD", a:["soft", "easy"]}, {q:"UP", a:["down"]}, {q:"LEFT", a:["right"]}
                 ];
-                this.applyTheme(); document.getElementById('cur-brains').innerText = this.brains;
+                this.init();
             }
-            applyTheme() {
-                const c = {red:'#f00', blue:'#08f', yellow:'#fc0', green:'#0f0', purple:'#90f'};
-                document.documentElement.style.setProperty('--accent', c[this.skin] || '#f00');
+            init() {
+                const c = {red:'#f00', blue:'#08f', yellow:'#fc0', green:'#0f0', purple:'#90f', orange:'#f60', pink:'#f3a'};
+                document.documentElement.style.setProperty('--accent', c[this.skin]);
+                document.getElementById('cur-brains').innerText = this.brains;
+                document.getElementById('lvl-display').innerText = "Level: " + this.lvl;
             }
             start() {
                 this.isPlaying = true; this.solved = 0; this.active = [];
-                this.levelBank = [...this.fullBank].sort(() => 0.5 - Math.random()).slice(0, 10);
+                // Pick questions for this level, ensuring no immediate repeats
+                this.levelBank = [...this.fullBank].sort(() => 0.5 - Math.random()).slice(0, 8 + this.lvl);
                 document.getElementById('overlay').style.display = 'none';
                 document.getElementById('ans').focus();
                 this.loop();
-                this.spawnInt = setInterval(() => { if(this.active.length < maxB && this.levelBank.length > 0) this.spawn(); }, 2500);
+                let speed = 0.5 + (this.lvl * 0.04);
+                this.spawnInt = setInterval(() => { 
+                    if(this.active.length < 2 && this.levelBank.length > 0) this.spawn(speed); 
+                }, 2800 - (this.lvl * 30));
             }
-            spawn() {
+            spawn(speed) {
                 const item = this.levelBank.pop();
-                const el = document.createElement('div'); el.className = 'bubble'; el.innerHTML = `<span>Opposite of:</span>${item.q}`;
+                const el = document.createElement('div'); el.className = 'bubble';
+                const vIcon = this.vehicle === 'car' ? '🏎️' : (this.vehicle === 'rocket' ? '🚀' : '⬜');
+                el.innerHTML = `<div class="vehicle-body">${vIcon}</div><div class="q-text"><span>Opposite of:</span>${item.q}</div>`;
                 
-                let topPos;
-                let isTooClose;
-                let attempts = 0;
-                do {
-                    isTooClose = false;
-                    // Grammar bubbles are tall, so we limit spawn strictly between 60px and 330px
-                    topPos = Math.floor(Math.random() * 270) + 60; 
-                    for(let b of this.active) {
-                        if(Math.abs(topPos - b.y) < 95) isTooClose = true; 
-                    }
-                    attempts++;
-                } while(isTooClose && attempts < 15);
-
+                let topPos = Math.floor(Math.random() * 250) + 60;
                 el.style.top = topPos + 'px';
                 document.getElementById('game-container').appendChild(el);
-                this.active.push({ el, x: -160, y: topPos, speed: baseS, answers: item.a });
+                this.active.push({ el, x: -160, answers: item.a, speed: speed });
             }
             loop() {
                 if(!this.isPlaying) return;
                 this.active.forEach(ent => {
                     ent.x += ent.speed;
                     ent.el.style.transform = `translateX(${ent.x}px)`;
-                    if(ent.x > 820) this.end('FAIL');
+                    if(ent.x > 820) this.end(false);
                 });
                 requestAnimationFrame(() => this.loop());
             }
-            end(res) {
+            end(success) {
                 this.isPlaying = false; clearInterval(this.spawnInt);
                 document.querySelectorAll('.bubble').forEach(b => b.remove());
                 document.getElementById('overlay').style.display = 'flex';
-                if(res === 'SUCCESS') { 
-                    this.brains += 30; localStorage.setItem('bt_coins', this.brains); 
-                    document.getElementById('cur-brains').innerText = this.brains; 
+                if(success) {
+                    this.brains += (15 * this.lvl);
+                    if(this.lvl === this.maxLvl) { this.maxLvl++; localStorage.setItem('bt_max_level', this.maxLvl); }
+                    localStorage.setItem('bt_coins', this.brains);
+                    document.getElementById('msg').innerText = "LEVEL COMPLETE!";
+                    document.getElementById('sub-msg').innerText = `Gained ${15 * this.lvl} brains!`;
+                    this.init();
+                } else {
+                    document.getElementById('msg').innerText = "FAILED";
+                    document.getElementById('sub-msg').innerText = "A vehicle escaped!";
                 }
             }
         }
@@ -113,7 +110,11 @@
         document.getElementById('ans').addEventListener('input', (e) => {
             const val = e.target.value.toLowerCase().trim();
             const i = game.active.findIndex(ent => ent.answers.includes(val));
-            if(i !== -1) { game.active[i].el.remove(); game.active.splice(i, 1); game.solved++; e.target.value = ''; if(game.solved >= 10) game.end('SUCCESS'); }
+            if(i !== -1) { 
+                game.active[i].el.remove(); game.active.splice(i, 1); 
+                game.solved++; e.target.value = ''; 
+                if(game.solved >= (8 + game.lvl - game.levelBank.length) && game.levelBank.length === 0 && game.active.length === 0) game.end(true); 
+            }
         });
     </script>
 </body>
