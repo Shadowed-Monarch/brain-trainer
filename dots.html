@@ -10,7 +10,7 @@
         header { width: 100%; padding: 10px 20px; display: flex; justify-content: space-between; border-bottom: 2px solid var(--accent); align-items: center; background: #050505; box-sizing: border-box; }
         .brain-wrap { display: flex; align-items: center; gap: 8px; color: var(--brain); font-weight: bold; }
         #game-container { position: relative; width: 95%; max-width: 800px; height: 450px; background: #080808; border: 2px solid var(--accent); border-radius: 15px; margin-top: 10px; overflow: hidden; cursor: crosshair; }
-        .dot { position: absolute; width: 45px; height: 45px; border-radius: 50%; background: var(--accent); border: 2px solid #fff; display: flex; align-items: center; justify-content: center; font-weight: bold; color: white; user-select: none; box-shadow: 0 0 10px var(--accent); z-index: 5; }
+        .dot { position: absolute; width: 45px; height: 45px; border-radius: 50%; background: var(--accent); border: 2px solid #fff; display: flex; align-items: center; justify-content: center; font-weight: bold; color: white; user-select: none; box-shadow: 0 0 10px var(--accent); z-index: 5; transition: opacity 0.2s, transform 0.2s; }
         #timer-bar { position: absolute; bottom: 0; left: 0; height: 6px; background: var(--accent); width: 100%; transition: width 0.1s linear; }
         #overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.95); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 10; padding: 20px; }
         .level-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; max-height: 200px; overflow-y: auto; margin: 15px 0; padding: 10px; width: 100%; }
@@ -29,7 +29,6 @@
         <div id="timer-bar"></div>
         <div id="overlay">
             <h2 id="m-title">DOTS REFLEX</h2>
-            <p style="font-size: 0.8rem; color: #aaa;">Click dots in order: 1, 2, 3...</p>
             <div class="level-grid" id="lvl-grid"></div>
             <button onclick="game.start()" style="padding:15px 40px; background:var(--accent); border:none; color:white; border-radius:30px; font-weight:bold; cursor:pointer;">START GAME</button>
         </div>
@@ -64,43 +63,82 @@
             }
             start() {
                 this.isPlaying = true; this.cur = 1;
-                this.dotsToSpawn = 4 + selectedLvl; // Level 1 has 5 dots
-                this.maxTime = 5 + (this.dotsToSpawn * 0.5);
+                this.dotsToSpawn = 4 + selectedLvl;
+                this.maxTime = 5 + (this.dotsToSpawn * 0.4); 
                 this.timeLeft = this.maxTime;
                 document.getElementById('overlay').style.display = 'none';
                 this.spawnDots();
+                if(this.timer) clearInterval(this.timer);
                 this.timer = setInterval(() => {
                     this.timeLeft -= 0.1;
                     document.getElementById('timer-bar').style.width = (this.timeLeft/this.maxTime)*100 + "%";
                     if(this.timeLeft <= 0) this.end(false);
                 }, 100);
             }
+
             spawnDots() {
                 const container = document.getElementById('game-container');
                 container.querySelectorAll('.dot').forEach(d => d.remove());
+                const placedDots = [];
+
                 for(let i=1; i<=this.dotsToSpawn; i++) {
-                    const d = document.createElement('div'); d.className = 'dot'; d.innerText = i;
-                    d.style.left = Math.random() * (container.offsetWidth - 50) + "px";
-                    d.style.top = Math.random() * (container.offsetHeight - 60) + "px";
+                    let x, y, overlapping;
+                    let attempts = 0;
+
+                    // Try to find a spot that doesn't overlap
+                    do {
+                        overlapping = false;
+                        x = Math.random() * (container.offsetWidth - 60) + 5;
+                        y = Math.random() * (container.offsetHeight - 70) + 5;
+                        attempts++;
+
+                        for(let dot of placedDots) {
+                            const dist = Math.hypot(x - dot.x, y - dot.y);
+                            if(dist < 60) { // Check if dots are closer than 60px
+                                overlapping = true;
+                                break;
+                            }
+                        }
+                        // Safety break to prevent infinite loop on very high levels
+                        if(attempts > 100) break; 
+                    } while(overlapping);
+
+                    placedDots.push({x, y});
+
+                    const d = document.createElement('div'); 
+                    d.className = 'dot'; 
+                    d.innerText = i;
+                    d.style.left = x + "px";
+                    d.style.top = y + "px";
+                    
                     d.onclick = () => {
                         if(parseInt(d.innerText) === this.cur) {
-                            d.remove(); this.cur++;
+                            d.style.transform = "scale(0)";
+                            setTimeout(() => d.remove(), 200);
+                            this.cur++;
                             if(this.cur > this.dotsToSpawn) this.end(true);
-                        } else { this.end(false); }
+                        } else { 
+                            this.end(false); 
+                        }
                     };
                     container.appendChild(d);
                 }
             }
+
             end(win) {
                 this.isPlaying = false; clearInterval(this.timer);
                 document.getElementById('overlay').style.display = 'flex';
                 if(win) {
                     this.brains += (selectedLvl * 5);
-                    if (selectedLvl === this.unlockedLvl) this.unlockedLvl++;
-                    localStorage.setItem('bt_unlocked_dots', this.unlockedLvl);
+                    if (selectedLvl === this.unlockedLvl) {
+                        this.unlockedLvl++;
+                        localStorage.setItem('bt_unlocked_dots', this.unlockedLvl);
+                    }
                     localStorage.setItem('bt_coins', this.brains);
                     document.getElementById('m-title').innerText = "WELL DONE!";
-                } else { document.getElementById('m-title').innerText = "FAILED!"; }
+                } else { 
+                    document.getElementById('m-title').innerText = "FAILED!"; 
+                }
                 this.initMenu();
             }
         }
