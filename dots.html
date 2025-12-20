@@ -24,7 +24,7 @@
     <header>
         <a href="index.html" style="color:white; text-decoration:none; border:1px solid #fff; padding:5px 12px; border-radius:5px; font-size: 0.8rem;">HOME</a>
         <div style="font-weight: bold; color: var(--accent);">LVL <span id="display-lvl">1</span></div>
-        <div class="brain-wrap"><img src="https://img.icons8.com/fluency/48/brain.png" style="width:20px;"> <span id="cur-brains">0</span></div>
+        <div class="brain-wrap">🧠 <span id="cur-brains">0</span></div>
     </header>
     <div id="game-container">
         <div id="timer-bar"></div>
@@ -44,32 +44,33 @@
                 this.unlockedLvl = parseInt(localStorage.getItem('bt_unlocked_dots')) || 1;
                 this.applyTheme();
                 this.initMenu();
+                this.updateUI();
             }
             applyTheme() {
                 const skinID = localStorage.getItem('bt_current_skin') || 'red';
                 const colors = { red:'#ff0000', blue:'#0088ff', yellow:'#ffcc00', green:'#00ff00', purple:'#9900ff' };
                 document.documentElement.style.setProperty('--accent', colors[skinID] || '#ff0000');
             }
+            updateUI() {
+                document.getElementById('cur-brains').innerText = this.brains;
+                document.getElementById('display-lvl').innerText = selectedLvl;
+            }
             initMenu() {
                 const grid = document.getElementById('lvl-grid'); grid.innerHTML = '';
                 const btnContainer = document.getElementById('btn-container');
                 btnContainer.innerHTML = ''; 
                 document.getElementById('main-start-btn').style.display = 'block';
-                document.getElementById('display-lvl').innerText = selectedLvl; // Updated this line
+                document.getElementById('display-lvl').innerText = selectedLvl;
 
                 for (let i = 1; i <= 100; i++) {
                     const btn = document.createElement('button'); btn.innerText = i; btn.className = 'lvl-btn';
                     if (i <= this.unlockedLvl) {
                         btn.classList.add('unlocked');
-                        btn.onclick = () => { 
-                            selectedLvl = i; 
-                            this.initMenu(); 
-                        };
+                        btn.onclick = () => { selectedLvl = i; this.initMenu(); this.updateUI(); };
                     }
                     if (i === selectedLvl) btn.classList.add('active');
                     grid.appendChild(btn);
                 }
-                document.getElementById('cur-brains').innerText = this.brains;
             }
             start() {
                 this.isPlaying = true; this.cur = 1;
@@ -85,29 +86,24 @@
                     if(this.timeLeft <= 0) this.end(false);
                 }, 100);
             }
-
             spawnDots() {
                 const container = document.getElementById('game-container');
                 container.querySelectorAll('.dot').forEach(d => d.remove());
                 const placed = [];
-                const dotSize = 60;
-
                 for(let i=1; i<=this.dotsToSpawn; i++) {
-                    let x, y, tooClose;
-                    let attempts = 0;
+                    let x, y, tooClose, attempts = 0;
                     do {
                         tooClose = false;
                         x = Math.random() * (container.offsetWidth - 70) + 10;
                         y = Math.random() * (container.offsetHeight - 80) + 10;
                         for(let p of placed) {
                             const dx = x - p.x; const dy = y - p.y;
-                            if(Math.sqrt(dx*dx + dy*dy) < dotSize) { tooClose = true; break; }
+                            if(Math.sqrt(dx*dx + dy*dy) < 60) { tooClose = true; break; }
                         }
                         attempts++;
                         if(attempts > 200) break;
                     } while(tooClose);
                     placed.push({x, y});
-
                     const d = document.createElement('div');
                     d.className = 'dot'; d.innerText = i;
                     d.style.left = x + "px"; d.style.top = y + "px";
@@ -123,15 +119,12 @@
                     container.appendChild(d);
                 }
             }
-
             end(win) {
                 this.isPlaying = false; clearInterval(this.timer);
                 const overlay = document.getElementById('overlay');
                 const btnContainer = document.getElementById('btn-container');
                 overlay.style.display = 'flex';
                 document.getElementById('main-start-btn').style.display = 'none';
-                btnContainer.innerHTML = '';
-
                 if(win) {
                     this.brains += (selectedLvl * 5);
                     if (selectedLvl === this.unlockedLvl) {
@@ -140,28 +133,18 @@
                     }
                     localStorage.setItem('bt_coins', this.brains);
                     document.getElementById('m-title').innerText = "WELL DONE!";
-
                     const nextBtn = document.createElement('button');
-                    nextBtn.className = 'game-btn';
-                    nextBtn.innerText = "NEXT LEVEL";
-                    nextBtn.onclick = () => { 
-                        selectedLvl++; 
-                        this.initMenu(); // This now updates the header
-                        this.start(); 
-                    };
+                    nextBtn.className = 'game-btn'; nextBtn.innerText = "NEXT LEVEL";
+                    nextBtn.onclick = () => { selectedLvl++; this.initMenu(); this.updateUI(); this.start(); };
                     btnContainer.appendChild(nextBtn);
                 } else { 
                     document.getElementById('m-title').innerText = "FAILED!"; 
                     const retryBtn = document.createElement('button');
-                    retryBtn.className = 'game-btn';
-                    retryBtn.innerText = "PLAY AGAIN";
+                    retryBtn.className = 'game-btn'; retryBtn.innerText = "PLAY AGAIN";
                     retryBtn.onclick = () => this.start();
                     btnContainer.appendChild(retryBtn);
                 }
-                this.updateBrains();
-            }
-            updateBrains() {
-                document.getElementById('cur-brains').innerText = this.brains;
+                this.updateUI();
             }
         }
         const game = new DotGame();
