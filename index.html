@@ -130,8 +130,7 @@
     </div>
 
     <script>
-        <script>
-    // 1. Initial Data Loading
+        
     let userBrains = parseInt(localStorage.getItem('bt_coins')) || 0;
     let unlocked = JSON.parse(localStorage.getItem('bt_skins')) || ['red'];
     let currentSkin = localStorage.getItem('bt_current_skin') || 'red';
@@ -157,7 +156,7 @@
         { name: "Overlord", min: 10000, icon: "🌌" }
     ];
 
-    // 2. Core UI Function
+
     function updateUI() {
         document.getElementById('brains').innerText = userBrains;
         document.getElementById('rank-score').innerText = userBrains;
@@ -180,10 +179,10 @@
         if (nextRank.name === "MAX") progress = 100;
         document.getElementById('rank-progress').style.width = Math.min(progress, 100) + "%";
 
-        // Apply Skin Theme
+
         const skin = colors.find(c => c.id === currentSkin);
         if(currentSkin === 'rainbow') {
-            document.documentElement.style.setProperty('--accent', '#ff00ff'); // Placeholder for rainbow
+            document.documentElement.style.setProperty('--accent', '#ff00ff'); 
             document.body.style.animation = "rainbow-glow 5s infinite linear";
         } else {
             document.body.style.animation = "none";
@@ -193,7 +192,7 @@
         renderShop();
     }
 
-    // 3. Shop Rendering Function
+  
     function renderShop() {
         const grid = document.getElementById('shop-grid'); 
         grid.innerHTML = '';
@@ -220,7 +219,7 @@
                     }
                 };
             } else {
-                // Styling for unlocked and currently active skin
+               
                 if(currentSkin === c.id) {
                     el.style.borderColor = "white";
                     el.style.boxShadow = "0 0 10px white";
@@ -235,7 +234,7 @@
         });
     }
 
-    // 4. Utility Functions (Shop & Dev Console)
+  
     function toggleShop() {
         const s = document.getElementById('shop-overlay');
         s.style.display = (s.style.display === 'flex') ? 'none' : 'flex';
@@ -281,7 +280,7 @@
         }
     };
 
-    // Initialize UI on page load
+  
     updateUI();
 </script>
 </body>
