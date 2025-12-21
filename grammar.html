@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Grammar</title>
+    <title>Grammar Train</title>
     <style>
         :root { --bg: #000; --accent: #ff0000; --brain: #ff77ff; }
         body { font-family: sans-serif; background: var(--bg); color: #fff; margin: 0; display: flex; flex-direction: column; align-items: center; height: 100vh; overflow: hidden; }
@@ -14,7 +14,7 @@
         #ans { padding: 15px; width: 80%; max-width: 400px; margin-top: 20px; background: #111; border: 2px solid var(--accent); color: #fff; border-radius: 12px; font-size: 24px; text-align: center; outline: none; text-transform: uppercase; }
         #overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.95); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 10; padding: 20px; }
         .level-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; max-height: 200px; overflow-y: auto; margin: 15px 0; padding: 10px; width: 100%; }
-        .lvl-btn { padding: 10px; border: 2px solid #333; background: #111; color: #666; cursor: not-allowed; border-radius: 8px; font-weight: bold; }
+        .lvl-btn { padding: 10px; border: 2px solid #333; background: #111; color: #666; cursor: not-allowed; border-radius: 8px; font-weight: bold; border-style: solid; }
         .lvl-btn.unlocked { border-color: #555; color: #fff; cursor: pointer; }
         .lvl-btn.active { border-color: var(--accent); background: var(--accent); color: white; }
         .game-btn { padding: 15px 40px; background: var(--accent); border: none; color: white; border-radius: 30px; font-weight: bold; cursor: pointer; margin-top: 10px; }
@@ -43,8 +43,10 @@
         let selectedLvl = 1;
         class GrammarGame {
             constructor() {
+
                 this.brains = parseInt(localStorage.getItem('bt_coins')) || 0;
                 this.unlockedLvl = parseInt(localStorage.getItem('bt_unlocked_grammar')) || 1;
+                
                 this.wordBank = [
 this.wordBank = [
     {q:"EASY", a:["difficult", "tough", "arduous", "demanding", "challenging"]},
@@ -147,59 +149,85 @@ this.wordBank = [
     {q:"UNIQUE", a:["common", "ordinary", "usual", "typical", "standard"]},
     {q:"UNITY", a:["division", "discord", "separation", "disunity", "conflict"]},
     {q:"VERTICAL", a:["horizontal", "flat", "level", "recumbent", "prone"]}
-];
                 ];
+                
+                this.isPlaying = false;
                 this.applyTheme();
                 this.initMenu();
                 this.updateUI();
             }
 
-applyTheme() {
+            applyTheme() {
                 const skinID = localStorage.getItem('bt_current_skin') || 'red';
                 const colors = { red:'#ff0000', blue:'#0088ff', yellow:'#ffcc00', green:'#00ff00', purple:'#9900ff' };
                 document.documentElement.style.setProperty('--accent', colors[skinID] || '#ff0000');
             }
 
             updateUI() {
-
                 document.getElementById('cur-brains').innerText = this.brains;
                 document.getElementById('display-lvl').innerText = selectedLvl;
             }
 
             initMenu() {
-                const grid = document.getElementById('lvl-grid'); grid.innerHTML = '';
+                const grid = document.getElementById('lvl-grid');
+                grid.innerHTML = '';
                 document.getElementById('btn-container').innerHTML = '';
                 document.getElementById('main-start-btn').style.display = 'block';
                 
+                this.unlockedLvl = parseInt(localStorage.getItem('bt_unlocked_grammar')) || 1;
+
                 for (let i = 1; i <= 100; i++) {
-                    const btn = document.createElement('button'); btn.innerText = i; btn.className = 'lvl-btn';
+                    const btn = document.createElement('button');
+                    btn.innerText = i;
+                    btn.className = 'lvl-btn';
+                    
                     if (i <= this.unlockedLvl) {
                         btn.classList.add('unlocked');
-                        btn.onclick = () => { selectedLvl = i; this.initMenu(); this.updateUI(); };
+                        btn.onclick = () => { 
+                            selectedLvl = i; 
+                            this.initMenu(); 
+                            this.updateUI(); 
+                        };
                     }
-                    if (i === selectedLvl) btn.classList.add('active');
+                    
+                    if (i === selectedLvl) {
+                        btn.classList.add('active');
+                    }
+                    
                     grid.appendChild(btn);
                 }
             }
 
             start() {
-                this.isPlaying = true; this.solved = 0; this.active = null;
+                this.isPlaying = true;
+                this.solved = 0;
+                this.active = null;
                 document.getElementById('overlay').style.display = 'none';
                 document.getElementById('count').innerText = "0";
-                document.getElementById('ans').value = ""; document.getElementById('ans').focus();
-                this.spawn(); this.loop();
+                document.getElementById('ans').value = "";
+                document.getElementById('ans').focus();
+                this.spawn();
+                this.loop();
             }
 
             spawn() {
                 if (!this.isPlaying) return;
                 if (this.solved >= 10) return this.end(true);
+                
                 const word = this.wordBank[Math.floor(Math.random() * this.wordBank.length)];
+                
+                // Remove existing train if any
+                if(this.active) this.active.el.remove();
+                
                 const el = document.createElement('div');
-                el.className = 'train-car'; el.innerText = word.q;
-                el.style.top = "150px"; el.style.left = "-150px";
+                el.className = 'train-car';
+                el.innerText = word.q;
+                el.style.top = "150px";
+                el.style.left = "-200px";
                 document.getElementById('game-container').appendChild(el);
-                const speed = 1 + (selectedLvl * 0.1);
-                this.active = { el, x: -150, s: speed, ans: word.a };
+                
+                const speed = 1.5 + (selectedLvl * 0.15);
+                this.active = { el, x: -200, s: speed, ans: word.a };
             }
 
             loop() {
@@ -207,7 +235,10 @@ applyTheme() {
                 if(this.active) {
                     this.active.x += this.active.s;
                     this.active.el.style.left = this.active.x + "px";
-                    if(this.active.x > 800) this.end(false);
+                    
+                    if(this.active.x > 850) {
+                        this.end(false);
+                    }
                 }
                 requestAnimationFrame(() => this.loop());
             }
@@ -215,18 +246,22 @@ applyTheme() {
             end(win) {
                 this.isPlaying = false;
                 if(this.active) this.active.el.remove();
+                
                 const overlay = document.getElementById('overlay');
                 overlay.style.display = 'flex';
                 document.getElementById('main-start-btn').style.display = 'none';
+                
                 const btnContainer = document.getElementById('btn-container');
                 btnContainer.innerHTML = '';
 
                 if(win) {
-                    // Update the local brains and save to the shared key
-                    this.brains += (selectedLvl * 5);
+               
+                    const reward = selectedLvl * 5;
+                    this.brains += reward;
                     localStorage.setItem('bt_coins', this.brains);
 
-                    if (selectedLvl === this.unlockedLvl) {
+            
+                    if (selectedLvl === this.unlockedLvl && this.unlockedLvl < 100) {
                         this.unlockedLvl++;
                         localStorage.setItem('bt_unlocked_grammar', this.unlockedLvl);
                     }
@@ -235,7 +270,12 @@ applyTheme() {
                     const nextBtn = document.createElement('button');
                     nextBtn.className = 'game-btn';
                     nextBtn.innerText = "NEXT LEVEL";
-                    nextBtn.onclick = () => { selectedLvl++; this.initMenu(); this.updateUI(); this.start(); };
+                    nextBtn.onclick = () => { 
+                        selectedLvl++; 
+                        this.initMenu(); 
+                        this.updateUI(); 
+                        this.start(); 
+                    };
                     btnContainer.appendChild(nextBtn);
                 } else {
                     document.getElementById('m-title').innerText = "TRAIN CRASHED!";
@@ -250,11 +290,15 @@ applyTheme() {
         }
 
         const game = new GrammarGame();
+
+
         document.getElementById('ans').addEventListener('input', (e) => {
             if(game.isPlaying && game.active) {
                 const val = e.target.value.toUpperCase().trim();
                 if(game.active.ans.includes(val)) {
-                    game.active.el.remove(); game.active = null; game.solved++;
+                    game.active.el.remove();
+                    game.active = null;
+                    game.solved++;
                     document.getElementById('count').innerText = game.solved;
                     document.getElementById('ans').value = "";
                     game.spawn();
