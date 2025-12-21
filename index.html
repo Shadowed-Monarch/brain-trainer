@@ -130,124 +130,159 @@
     </div>
 
     <script>
-        let userBrains = parseInt(localStorage.getItem('bt_coins')) || 0;
-        let unlocked = JSON.parse(localStorage.getItem('bt_skins')) || ['red'];
-        let currentSkin = localStorage.getItem('bt_current_skin') || 'red';
+        <script>
+    // 1. Initial Data Loading
+    let userBrains = parseInt(localStorage.getItem('bt_coins')) || 0;
+    let unlocked = JSON.parse(localStorage.getItem('bt_skins')) || ['red'];
+    let currentSkin = localStorage.getItem('bt_current_skin') || 'red';
 
-const colors = [
-{id:'red', hex:'#ff0000', cost:0},
-    {id:'blue', hex:'#0088ff', cost:500},
-    {id:'yellow', hex:'#ffcc00', cost:1000},
-    {id:'green', hex:'#00ff00', cost:2000},
-    {id:'cyan', hex:'#00ffff', cost:3500},       
-    {id:'pink', hex:'#ff00ff', cost:5000},       
-    {id:'purple', hex:'#9900ff', cost:7500},
-    {id:'orange', hex:'#ff6600', cost:10000},  
-    {id:'gold', hex:'#ffd700', cost:25000},
-    {id:'rainbow', hex:'linear-gradient(45deg, #ff0000, #ffcc00, #00ff00, #0088ff, #9900ff)', cost:50000}
-];
+    const colors = [
+        {id:'red', hex:'#ff0000', cost:0},
+        {id:'blue', hex:'#0088ff', cost:500},
+        {id:'yellow', hex:'#ffcc00', cost:1000},
+        {id:'green', hex:'#00ff00', cost:2000},
+        {id:'cyan', hex:'#00ffff', cost:3500},       
+        {id:'pink', hex:'#ff00ff', cost:5000},       
+        {id:'purple', hex:'#9900ff', cost:7500},
+        {id:'orange', hex:'#ff6600', cost:10000},  
+        {id:'gold', hex:'#ffd700', cost:25000},
+        {id:'rainbow', hex:'linear-gradient(45deg, #ff0000, #ffcc00, #00ff00, #0088ff, #9900ff)', cost:50000}
+    ];
 
-        const ranks = [
-            { name: "Student", min: 0, icon: "🎓" },
-            { name: "Scholar", min: 500, icon: "📜" },
-            { name: "Genius", min: 2000, icon: "💡" },
-            { name: "Mastermind", min: 5000, icon: "👑" },
-            { name: "Overlord", min: 10000, icon: "🌌" }
-        ];
+    const ranks = [
+        { name: "Student", min: 0, icon: "🎓" },
+        { name: "Scholar", min: 500, icon: "📜" },
+        { name: "Genius", min: 2000, icon: "💡" },
+        { name: "Mastermind", min: 5000, icon: "👑" },
+        { name: "Overlord", min: 10000, icon: "🌌" }
+    ];
 
-        function updateUI() {
-            document.getElementById('brains').innerText = userBrains;
-            document.getElementById('rank-score').innerText = userBrains;
+    // 2. Core UI Function
+    function updateUI() {
+        document.getElementById('brains').innerText = userBrains;
+        document.getElementById('rank-score').innerText = userBrains;
 
-            let currentRank = ranks[0];
-            let nextRank = ranks[1] || ranks[0];
-            
-            for (let i = 0; i < ranks.length; i++) {
-                if (userBrains >= ranks[i].min) {
-                    currentRank = ranks[i];
-                    nextRank = ranks[i + 1] || { name: "MAX", min: userBrains, icon: "🌌" };
-                }
+        let currentRank = ranks[0];
+        let nextRank = ranks[1] || ranks[0];
+        
+        for (let i = 0; i < ranks.length; i++) {
+            if (userBrains >= ranks[i].min) {
+                currentRank = ranks[i];
+                nextRank = ranks[i + 1] || { name: "MAX", min: userBrains, icon: "🌌" };
             }
+        }
 
-            document.getElementById('rank-name').innerText = currentRank.name;
-            document.getElementById('rank-icon').innerText = currentRank.icon;
-            document.getElementById('next-rank-info').innerHTML = `Next: ${nextRank.name} at ${nextRank.min} (Current: <span style="color:var(--brain)">${userBrains}</span> 🧠)`;
+        document.getElementById('rank-name').innerText = currentRank.name;
+        document.getElementById('rank-icon').innerText = currentRank.icon;
+        document.getElementById('next-rank-info').innerHTML = `Next: ${nextRank.name} at ${nextRank.min} (Current: <span style="color:var(--brain)">${userBrains}</span> 🧠)`;
 
-            let progress = ((userBrains - currentRank.min) / (nextRank.min - currentRank.min)) * 100;
-            if (nextRank.name === "MAX") progress = 100;
-            document.getElementById('rank-progress').style.width = Math.min(progress, 100) + "%";
+        let progress = ((userBrains - currentRank.min) / (nextRank.min - currentRank.min)) * 100;
+        if (nextRank.name === "MAX") progress = 100;
+        document.getElementById('rank-progress').style.width = Math.min(progress, 100) + "%";
 
-            const skin = colors.find(c => c.id === currentSkin);
+        // Apply Skin Theme
+        const skin = colors.find(c => c.id === currentSkin);
+        if(currentSkin === 'rainbow') {
+            document.documentElement.style.setProperty('--accent', '#ff00ff'); // Placeholder for rainbow
+            document.body.style.animation = "rainbow-glow 5s infinite linear";
+        } else {
+            document.body.style.animation = "none";
             document.documentElement.style.setProperty('--accent', skin.hex);
-            renderShop();
         }
 
-        function renderShop() {
-            const grid = document.getElementById('shop-grid'); grid.innerHTML = '';
-            colors.forEach(c => {
-                const el = document.createElement('div');
-                el.className = 'shop-item'; el.style.background = c.hex;
-                if(!unlocked.includes(c.id)) {
-                    el.innerHTML = `<span style="color:#000; font-size:10px; display:flex; justify-content:center; align-items:center; height:100%; font-weight:bold;">${c.cost}</span>`;
-                    el.onclick = () => { if(userBrains >= c.cost) { userBrains -= c.cost; unlocked.push(c.id); localStorage.setItem('bt_coins', userBrains); localStorage.setItem('bt_skins', JSON.stringify(unlocked)); updateUI(); } };
-                } else {
-                    if(currentSkin === c.id) el.style.borderColor = "white";
-                    el.onclick = () => { currentSkin = c.id; localStorage.setItem('bt_current_skin', c.id); updateUI(); };
-                }
-                grid.appendChild(el);
-            });
-        }
+        renderShop();
+    }
 
-        function toggleShop() {
-            const s = document.getElementById('shop-overlay');
-            s.style.display = (s.style.display === 'flex') ? 'none' : 'flex';
-        }
-
-        let clickCount = 0;
-        let clickTimer;
-        document.getElementById('brain-clicker').onclick = function() {
-            clickCount++;
-            clearTimeout(clickTimer);
-            clickTimer = setTimeout(() => { clickCount = 0; }, 1000);
-            if (clickCount === 5) { toggleDev(); clickCount = 0; }
-        };
-
-        function toggleDev() {
-            const d = document.getElementById('dev-console');
-            d.style.display = (d.style.display === 'flex') ? 'none' : 'flex';
-            if(d.style.display === 'flex') document.getElementById('dev-code').focus();
-        }
-
-        document.getElementById('dev-code').onkeypress = function(e) {
-            if (e.key === 'Enter') {
-                const val = this.value.toUpperCase().trim();
+    // 3. Shop Rendering Function
+    function renderShop() {
+        const grid = document.getElementById('shop-grid'); 
+        grid.innerHTML = '';
+        colors.forEach(c => {
+            const el = document.createElement('div');
+            el.className = 'shop-item'; 
+            el.style.background = c.hex;
+            
+            if(!unlocked.includes(c.id)) {
+                // Determine if text should be black or white based on background brightness
+                const isLight = ['yellow', 'cyan', 'gold', 'rainbow'].includes(c.id);
+                const textColor = isLight ? '#000' : '#fff';
+                el.innerHTML = `<span style="color:${textColor}; font-size:10px; font-weight:bold;">${c.cost}</span>`;
                 
-                if (val === 'GODMODE') { 
-                    userBrains = 99999; 
-                    localStorage.setItem('bt_coins', 99999); 
+                el.onclick = () => { 
+                    if(userBrains >= c.cost) { 
+                        userBrains -= c.cost; 
+                        unlocked.push(c.id); 
+                        localStorage.setItem('bt_coins', userBrains); 
+                        localStorage.setItem('bt_skins', JSON.stringify(unlocked)); 
+                        updateUI(); 
+                    } else {
+                        alert("NOT ENOUGH BRAINS!");
+                    }
+                };
+            } else {
+                // Styling for unlocked and currently active skin
+                if(currentSkin === c.id) {
+                    el.style.borderColor = "white";
+                    el.style.boxShadow = "0 0 10px white";
+                }
+                el.onclick = () => { 
+                    currentSkin = c.id; 
+                    localStorage.setItem('bt_current_skin', c.id); 
                     updateUI(); 
-                    alert("GODMODE ACTIVE");
-                }
-                
-                if (val === 'RESET') { 
-                    localStorage.clear(); 
-                    location.reload(); 
-                }
-                
-                if (val === 'UNLOCK') { 
-                    localStorage.setItem('bt_unlocked', 100); 
-                    localStorage.setItem('bt_unlocked_dots', 100); 
-                    localStorage.setItem('bt_unlocked_grammar', 100); 
-                    alert("ALL LEVELS UNLOCKED");
-                    location.reload(); 
-                }
-                
-                this.value = ''; 
-                toggleDev();
+                };
             }
-        };
+            grid.appendChild(el);
+        });
+    }
 
-        updateUI();
-    </script>
+    // 4. Utility Functions (Shop & Dev Console)
+    function toggleShop() {
+        const s = document.getElementById('shop-overlay');
+        s.style.display = (s.style.display === 'flex') ? 'none' : 'flex';
+    }
+
+    let clickCount = 0;
+    let clickTimer;
+    document.getElementById('brain-clicker').onclick = function() {
+        clickCount++;
+        clearTimeout(clickTimer);
+        clickTimer = setTimeout(() => { clickCount = 0; }, 1000);
+        if (clickCount === 5) { toggleDev(); clickCount = 0; }
+    };
+
+    function toggleDev() {
+        const d = document.getElementById('dev-console');
+        d.style.display = (d.style.display === 'flex') ? 'none' : 'flex';
+        if(d.style.display === 'flex') document.getElementById('dev-code').focus();
+    }
+
+    document.getElementById('dev-code').onkeypress = function(e) {
+        if (e.key === 'Enter') {
+            const val = this.value.toUpperCase().trim();
+            if (val === 'GODMODE') { 
+                userBrains = 99999; 
+                localStorage.setItem('bt_coins', 99999); 
+                updateUI(); 
+                alert("GODMODE ACTIVE");
+            }
+            if (val === 'RESET') { 
+                localStorage.clear(); 
+                location.reload(); 
+            }
+            if (val === 'UNLOCK') { 
+                localStorage.setItem('bt_unlocked', 100); 
+                localStorage.setItem('bt_unlocked_dots', 100); 
+                localStorage.setItem('bt_unlocked_grammar', 100); 
+                alert("ALL LEVELS UNLOCKED");
+                location.reload(); 
+            }
+            this.value = ''; 
+            toggleDev();
+        }
+    };
+
+    // Initialize UI on page load
+    updateUI();
+</script>
 </body>
 </html>
