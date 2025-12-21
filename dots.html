@@ -4,9 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dots Reflex</title>
+    <script src="theme.js"></script>
     <style>
         :root { --bg: #050505; --accent: #f00; --brain: #ff77ff; }
 
+        /* Ensure rainbow animation is available on this page */
         @keyframes rainbow-glow { 
             0%{--accent:#f00} 20%{--accent:#ff0} 40%{--accent:#0f0} 
             60%{--accent:#0ff} 80%{--accent:#90f} 100%{--accent:#f00} 
@@ -44,40 +46,38 @@
 
     <script>
         let selectedLvl = 1;
+
         class DotGame {
             constructor() {
                 this.brains = parseInt(localStorage.getItem('bt_coins')) || 0;
                 this.unlockedLvl = parseInt(localStorage.getItem('bt_unlocked_dots')) || 1;
-                this.applyTheme();
+                
+                // 2. Call the global theme function from theme.js
+                if (typeof applyGlobalTheme === 'function') {
+                    applyGlobalTheme();
+                }
+
                 this.initMenu();
                 this.updateUI();
             }
-            applyTheme() {
-                const savedSkin = localStorage.getItem('bt_current_skin') || 'red';
-                const skinColors = {
-                    'red': '#ff0000', 'blue': '#0088ff', 'yellow': '#ffcc00', 
-                    'green': '#00ff00', 'cyan': '#00ffff', 'pink': '#ff00ff', 
-                    'purple': '#9900ff', 'orange': '#ff6600', 'gold': '#ffd700'
-                };
-                if(savedSkin === 'rainbow') {
-                    document.documentElement.style.animation = "rainbow-glow 5s infinite linear";
-                } else {
-                    document.documentElement.style.animation = "none";
-                    document.documentElement.style.setProperty('--accent', skinColors[savedSkin] || '#ff0000');
-                }
-            }
+
             updateUI() {
                 document.getElementById('cur-brains').innerText = this.brains;
                 document.getElementById('display-lvl').innerText = selectedLvl;
             }
+
             initMenu() {
-                const grid = document.getElementById('lvl-grid'); grid.innerHTML = '';
+                const grid = document.getElementById('lvl-grid'); 
+                grid.innerHTML = '';
                 const btnContainer = document.getElementById('btn-container');
                 btnContainer.innerHTML = ''; 
                 document.getElementById('main-start-btn').style.display = 'block';
                 document.getElementById('display-lvl').innerText = selectedLvl;
+
                 for (let i = 1; i <= 100; i++) {
-                    const btn = document.createElement('button'); btn.innerText = i; btn.className = 'lvl-btn';
+                    const btn = document.createElement('button'); 
+                    btn.innerText = i; 
+                    btn.className = 'lvl-btn';
                     if (i <= this.unlockedLvl) {
                         btn.classList.add('unlocked');
                         btn.onclick = () => { selectedLvl = i; this.initMenu(); this.updateUI(); };
@@ -86,13 +86,16 @@
                     grid.appendChild(btn);
                 }
             }
+
             start() {
-                this.isPlaying = true; this.cur = 1;
+                this.isPlaying = true; 
+                this.cur = 1;
                 this.dotsToSpawn = Math.min(4 + selectedLvl, 35);
                 this.maxTime = 5 + (this.dotsToSpawn * 0.5);
                 this.timeLeft = this.maxTime;
                 document.getElementById('overlay').style.display = 'none';
                 this.spawnDots();
+
                 if(this.timer) clearInterval(this.timer);
                 this.timer = setInterval(() => {
                     this.timeLeft -= 0.1;
@@ -100,6 +103,7 @@
                     if(this.timeLeft <= 0) this.end(false);
                 }, 100);
             }
+
             spawnDots() {
                 const container = document.getElementById('game-container');
                 container.querySelectorAll('.dot').forEach(d => d.remove());
@@ -117,10 +121,13 @@
                         attempts++;
                         if(attempts > 200) break;
                     } while(tooClose);
+                    
                     placed.push({x, y});
                     const d = document.createElement('div');
-                    d.className = 'dot'; d.innerText = i;
-                    d.style.left = x + "px"; d.style.top = y + "px";
+                    d.className = 'dot'; 
+                    d.innerText = i;
+                    d.style.left = x + "px"; 
+                    d.style.top = y + "px";
                     d.onclick = () => {
                         if(!this.isPlaying) return;
                         if(parseInt(d.innerText) === this.cur) {
@@ -128,17 +135,22 @@
                             setTimeout(() => d.remove(), 150);
                             this.cur++;
                             if(this.cur > this.dotsToSpawn) this.end(true);
-                        } else { this.end(false); }
+                        } else { 
+                            this.end(false); 
+                        }
                     };
                     container.appendChild(d);
                 }
             }
+
             end(win) {
-                this.isPlaying = false; clearInterval(this.timer);
+                this.isPlaying = false; 
+                clearInterval(this.timer);
                 const overlay = document.getElementById('overlay');
                 const btnContainer = document.getElementById('btn-container');
                 overlay.style.display = 'flex';
                 document.getElementById('main-start-btn').style.display = 'none';
+
                 if(win) {
                     this.brains += (selectedLvl * 5);
                     if (selectedLvl === this.unlockedLvl) {
@@ -148,19 +160,22 @@
                     localStorage.setItem('bt_coins', this.brains);
                     document.getElementById('m-title').innerText = "WELL DONE!";
                     const nextBtn = document.createElement('button');
-                    nextBtn.className = 'game-btn'; nextBtn.innerText = "NEXT LEVEL";
+                    nextBtn.className = 'game-btn'; 
+                    nextBtn.innerText = "NEXT LEVEL";
                     nextBtn.onclick = () => { selectedLvl++; this.initMenu(); this.updateUI(); this.start(); };
                     btnContainer.appendChild(nextBtn);
                 } else { 
                     document.getElementById('m-title').innerText = "FAILED!"; 
                     const retryBtn = document.createElement('button');
-                    retryBtn.className = 'game-btn'; retryBtn.innerText = "PLAY AGAIN";
+                    retryBtn.className = 'game-btn'; 
+                    retryBtn.innerText = "PLAY AGAIN";
                     retryBtn.onclick = () => this.start();
                     btnContainer.appendChild(retryBtn);
                 }
                 this.updateUI();
             }
         }
+
         const game = new DotGame();
     </script>
 </body>
