@@ -185,31 +185,56 @@
         renderShop();
     }
 
-    function renderShop() {
-        const grid = document.getElementById('shop-grid'); 
-        grid.innerHTML = '';
-        colors.forEach(c => {
-            const el = document.createElement('div');
-            el.className = 'shop-item'; 
-            el.style.background = c.hex;
+function renderShop() {
+    const grid = document.getElementById('shop-grid'); 
+    if (!grid) return;
+    grid.innerHTML = '';
+
+    colors.forEach(c => {
+        const el = document.createElement('div');
+        el.className = 'shop-item'; 
+        el.style.background = c.hex;
+        
+        if(!unlocked.includes(c.id)) {
+            const isLight = ['yellow', 'cyan', 'gold', 'rainbow'].includes(c.id);
+            const textColor = isLight ? '#000' : '#fff';
+            el.innerHTML = `<span style="color:${textColor}; font-size:10px; font-weight:bold;">${c.cost}</span>`;
             
-            if(!unlocked.includes(c.id)) {
-                const isLight = ['yellow', 'cyan', 'gold', 'rainbow'].includes(c.id);
-                const textColor = isLight ? '#000' : '#fff';
-                el.innerHTML = `<span style="color:${textColor}; font-size:10px; font-weight:bold;">${c.cost}</span>`;
+            el.onclick = () => { 
+                if(userBrains >= c.cost) { 
+                    userBrains -= c.cost; 
+                    unlocked.push(c.id); 
+                    localStorage.setItem('bt_coins', userBrains); 
+                    localStorage.setItem('bt_skins', JSON.stringify(unlocked)); 
+                    updateUI(); // This refreshes the colors immediately
+                } else {
+                    alert("NOT ENOUGH BRAINS!");
+                }
+            };
+        } else {
+            if(currentSkin === c.id) {
+                el.style.borderColor = "white";
+                el.style.boxShadow = "0 0 10px white";
+            }
+            el.onclick = () => { 
+                currentSkin = c.id; 
+                localStorage.setItem('bt_current_skin', c.id); 
                 
-                el.onclick = () => { 
-                    if(userBrains >= c.cost) { 
-                        userBrains -= c.cost; 
-                        unlocked.push(c.id); 
-                        localStorage.setItem('bt_coins', userBrains); 
-                        localStorage.setItem('bt_skins', JSON.stringify(unlocked)); 
-                        updateUI(); 
-                    } else {
-                        alert("NOT ENOUGH BRAINS!");
-                    }
-                };
-            } else {
+                // FORCE THE COLOR CHANGE HERE
+                const selectedSkin = colors.find(col => col.id === currentSkin);
+                if (currentSkin === 'rainbow') {
+                    document.body.classList.add('rainbow-active');
+                } else {
+                    document.body.classList.remove('rainbow-active');
+                    document.documentElement.style.setProperty('--accent', selectedSkin.hex);
+                }
+                
+                updateUI(); 
+            };
+        }
+        grid.appendChild(el);
+    });
+} else {
                 if(currentSkin === c.id) {
                     el.style.borderColor = "white";
                     el.style.boxShadow = "0 0 10px white";
