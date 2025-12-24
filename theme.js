@@ -1,8 +1,6 @@
 function applyGlobalTheme() {
-
     const savedMode = localStorage.getItem('bt_mode') || 'dark';
     document.documentElement.setAttribute('data-theme', savedMode);
-
 
     const savedSkin = localStorage.getItem('bt_current_skin') || 'red';
     const skinColors = {
@@ -12,13 +10,14 @@ function applyGlobalTheme() {
     };
 
     if(savedSkin === 'rainbow') {
-
+        document.body.classList.add('rainbow-active');
         document.documentElement.style.animation = "rainbow-glow 5s infinite linear";
     } else {
+        document.body.classList.remove('rainbow-active');
         document.documentElement.style.animation = "none";
         document.documentElement.style.setProperty('--accent', skinColors[savedSkin] || '#ff0000');
     }
 }
 
-
 applyGlobalTheme();
+window.addEventListener('focus', applyGlobalTheme);
