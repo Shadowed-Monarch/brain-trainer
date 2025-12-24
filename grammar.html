@@ -6,271 +6,155 @@
     <title>Grammar Train</title>
     <script src="theme.js"></script>
     <style>
-        :root { --bg: #050505; --accent: #ff0000; --brain: #ff77ff; }
+        @property --accent { syntax: '<color>'; initial-value: #ff0000; inherits: true; }
+        :root[data-theme="dark"] { --bg: #050505; --text: #fff; --border: #333; --overlay: rgba(0,0,0,0.9); }
+        :root[data-theme="light"] { --bg: #f5f5f5; --text: #000; --border: #ddd; --overlay: rgba(255,255,255,0.9); }
         
-        @keyframes rainbow-glow { 
+        @keyframes rainbow-loop { 
             0%{--accent:#f00} 20%{--accent:#ff0} 40%{--accent:#0f0} 
             60%{--accent:#0ff} 80%{--accent:#90f} 100%{--accent:#f00} 
         }
+        .rainbow-active { animation: rainbow-loop 5s infinite linear !important; }
 
-        body { font-family: sans-serif; background: var(--bg); color: #fff; margin: 0; display: flex; flex-direction: column; align-items: center; height: 100vh; overflow: hidden; }
-        header { width: 100%; padding: 10px 20px; display: flex; justify-content: space-between; border-bottom: 2px solid var(--accent); align-items: center; background: #050505; box-sizing: border-box; }
-        .brain-wrap { display: flex; align-items: center; gap: 8px; color: var(--brain); font-weight: bold; }
-        #game-container { position: relative; width: 95%; max-width: 800px; height: 350px; background: #080808; border: 2px solid var(--accent); border-radius: 15px; margin-top: 10px; overflow: hidden; }
-        .train-car { position: absolute; background: var(--accent); padding: 15px 25px; border-radius: 10px; font-weight: bold; font-size: 1.2rem; box-shadow: 0 0 15px var(--accent); color: white; white-space: nowrap; }
-        #ans { padding: 15px; width: 80%; max-width: 400px; margin-top: 20px; background: #111; border: 2px solid var(--accent); color: #fff; border-radius: 12px; font-size: 24px; text-align: center; outline: none; text-transform: uppercase; }
-        #overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.95); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 10; padding: 20px; }
-        .level-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; max-height: 200px; overflow-y: auto; margin: 15px 0; padding: 10px; width: 100%; }
-        .lvl-btn { padding: 10px; border: 2px solid #333; background: #111; color: #666; cursor: not-allowed; border-radius: 8px; font-weight: bold; }
-        .lvl-btn.unlocked { border-color: #555; color: #fff; cursor: pointer; }
-        .lvl-btn.active { border-color: var(--accent); background: var(--accent); color: white; }
-        .game-btn { padding: 15px 40px; background: var(--accent); border: none; color: white; border-radius: 30px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        body { font-family: sans-serif; background: var(--bg); color: var(--text); margin: 0; display: flex; flex-direction: column; align-items: center; height: 100vh; overflow: hidden; }
+        header { width: 100%; padding: 10px 20px; display: flex; justify-content: space-between; border-bottom: 2px solid var(--accent); align-items: center; background: var(--bg); box-sizing: border-box; }
+        .brain-wrap { display: flex; align-items: center; gap: 8px; color: #ff77ff; font-weight: bold; }
+        #game-container { position: relative; width: 95%; max-width: 800px; height: 70vh; margin-top: 20px; overflow: hidden; border: 1px solid var(--border); border-radius: 10px; background: var(--bg); }
+        
+        #input-area { width: 95%; max-width: 800px; display: flex; gap: 10px; margin-top: 20px; justify-content: center; }
+        #ans { padding: 15px; font-size: 1.5rem; text-align: center; border: 2px solid var(--accent); border-radius: 10px; width: 300px; outline: none; background: var(--bg); color: var(--text); }
+        
+        .word-card { 
+            position: absolute; padding: 10px 20px; border-radius: 10px; 
+            border: 2px solid var(--accent); font-weight: bold; background: var(--bg); color: var(--text);
+            box-shadow: 0 0 10px var(--accent); font-size: 1.2rem; white-space: nowrap;
+            animation-timing-function: linear; 
+        }
+
+        @keyframes fall { from { top: -60px; } to { top: 100%; } }
+        .game-btn { padding: 15px 40px; font-size: 1.5rem; background: var(--bg); color: var(--text); border: 2px solid var(--accent); border-radius: 30px; cursor: pointer; margin-top: 50px; }
+        .game-btn:hover { background: var(--accent); color: var(--bg); }
+        #btn-container { position: absolute; inset: 0; display: none; flex-direction: column; align-items: center; justify-content: center; background: var(--overlay); z-index: 20; }
+        #stats { display: flex; gap: 20px; margin-top: 10px; font-size: 1.2rem; }
     </style>
 </head>
 <body>
     <header>
-        <a href="index.html" style="color:white; text-decoration:none; border:1px solid #fff; padding:5px 12px; border-radius:5px; font-size: 0.8rem;">HOME</a>
-        <div style="font-weight: bold; color: var(--accent);">LVL <span id="display-lvl">1</span></div>
-        <div class="brain-wrap">🧠 <span id="cur-brains">0</span></div>
+        <a href="index.html" style="text-decoration:none; color:var(--text); font-weight:bold;">← HOME</a>
+        <div style="font-weight:bold;">LEVEL <span id="lvl-display">1</span></div>
+        <div class="brain-wrap"><span>🧠</span> <span id="total-brains">0</span></div>
     </header>
 
+    <div id="stats">
+        <div>Solved: <span id="count">0</span>/10</div>
+        <div>Time: <span id="time">30</span>s</div>
+    </div>
+
     <div id="game-container">
-        <div id="overlay">
-            <h2 id="m-title">GRAMMAR TRAIN</h2>
-            <div class="level-grid" id="lvl-grid"></div>
-            <button id="main-start-btn" class="game-btn" onclick="game.start()">START TRAINING</button>
-            <div id="btn-container"></div>
+        <div id="btn-container">
+            <h1 id="m-title" style="font-size:3rem;">TRAIN CRASHED!</h1>
         </div>
     </div>
 
-    <input type="text" id="ans" placeholder="TYPE OPPOSITE..." autocomplete="off">
-    <p style="color:#888; margin: 10px 0;">SOLVED: <span id="count" style="color:white">0</span>/10</p>
+    <div id="input-area">
+        <input type="text" id="ans" placeholder="Type the missing word..." autocomplete="off">
+    </div>
+
+    <button id="start-btn" class="game-btn" onclick="game.start()">START GAME</button>
 
     <script>
-        if (window.CSS && CSS.registerProperty) {
-        CSS.registerProperty({
-            name: '--accent',
-            syntax: '<color>',
-            inherits: true,
-            initialValue: '#ff0000'
-        });
-    }
-        let selectedLvl = 1;
+        let selectedLvl = parseInt(localStorage.getItem('bt_unlocked_grammar')) || 1;
+        
+        const sentences = [
+            {q: "She ___ to the store.", a: "went"}, {q: "They ___ playing soccer.", a: "are"},
+            {q: "I ___ a book.", a: "have"}, {q: "He ___ faster than me.", a: "runs"},
+            {q: "The sun ___ bright.", a: "is"}, {q: "We ___ happy.", a: "are"},
+            {q: "Dog ___ loudly.", a: "barks"}, {q: "Cats ___ milk.", a: "drink"},
+            {q: "Birds ___ in sky.", a: "fly"}, {q: "Fish ___ in water.", a: "swim"},
+            {q: "I ___ happy.", a: "am"}, {q: "You ___ nice.", a: "are"},
+            {q: "It ___ cold.", a: "is"}, {q: "We ___ won.", a: "have"},
+            {q: "They ___ late.", a: "were"}
+        ];
 
         class GrammarGame {
             constructor() {
+                this.level = selectedLvl;
                 this.brains = parseInt(localStorage.getItem('bt_coins')) || 0;
-                this.unlockedLvl = parseInt(localStorage.getItem('bt_unlocked_grammar')) || 1;
-                
-                this.wordBank = [
-                    {q:"EASY", a:["difficult", "tough", "arduous", "demanding", "challenging"]},
-                    {q:"BRIGHT", a:["dark", "dim", "dull", "gloomy", "obscure"]},
-                    {q:"HAPPY", a:["sad", "miserable", "depressed", "sorrowful", "melancholy"]},
-                    {q:"FAST", a:["slow", "sluggish", "leaden", "leisurely", "gradual"]},
-                    {q:"BIG", a:["small", "tiny", "minute", "petite", "microscopic"]},
-                    {q:"HOT", a:["cold", "chilly", "frigid", "freezing", "icy"]},
-                    {q:"STRONG", a:["weak", "feeble", "fragile", "frail", "puny"]},
-                    {q:"RICH", a:["poor", "impoverished", "needy", "destitute", "penniless"]},
-                    {q:"CLEAN", a:["dirty", "filthy", "grimy", "soiled", "polluted"]},
-                    {q:"BRAVE", a:["cowardly", "fearful", "timid", "craven", "meek"]},
-                    {q:"QUIET", a:["loud", "noisy", "deafening", "rowdy", "boisterous"]},
-                    {q:"NEW", a:["old", "ancient", "antique", "dated", "obsolete"]},
-                    {q:"SMOOTH", a:["rough", "bumpy", "coarse", "rugged", "uneven"]},
-                    {q:"SHARP", a:["dull", "blunt", "rounded", "flat", "obtuse"]},
-                    {q:"DEEP", a:["shallow", "superficial", "slight", "surface-level", "flat"]},
-                    {q:"TRUE", a:["false", "fake", "incorrect", "erroneous", "mendacious"]},
-                    {q:"WIDE", a:["narrow", "thin", "slender", "tight", "constricted"]},
-                    {q:"FULL", a:["empty", "vacant", "void", "hollow", "depleted"]},
-                    {q:"SMART", a:["stupid", "ignorant", "unintelligent", "foolish", "simple-minded"]},
-                    {q:"KIND", a:["cruel", "mean", "malicious", "heartless", "callous"]},
-                    {q:"HIGH", a:["low", "deep", "short", "sunken", "bottom"]},
-                    {q:"YOUNG", a:["old", "aged", "elderly", "ancient", "mature"]},
-                    {q:"LOVE", a:["hate", "hatred", "abhorrence", "loathing", "detestation"]},
-                    {q:"VICTORY", a:["defeat", "loss", "failure", "beating", "rout"]},
-                    {q:"THICK", a:["thin", "slender", "slim", "fine", "narrow"]},
-                    {q:"FIRST", a:["last", "final", "ending", "ultimate", "concluding"]},
-                    {q:"CHEAP", a:["expensive", "costly", "pricey", "valuable", "extravagant"]},
-                    {q:"BEAUTIFUL", a:["ugly", "hideous", "unattractive", "grotesque", "revolting"]},
-                    {q:"SWEET", a:["sour", "bitter", "salty", "acidic", "tart"]},
-                    {q:"HEALTHY", a:["sick", "ill", "unwell", "ailing", "diseased"]},
-                    {q:"SAFE", a:["dangerous", "risky", "perilous", "unsafe", "hazardous"]},
-                    {q:"HEAVY", a:["light", "weightless", "airy", "buoyant", "flimsy"]},
-                    {q:"SUCCESS", a:["failure", "disaster", "flop", "fiasco", "defeat"]},
-                    {q:"START", a:["stop", "finish", "end", "cease", "conclude"]},
-                    {q:"ALIVE", a:["dead", "deceased", "lifeless", "departed", "extinct"]},
-                    {q:"DRY", a:["wet", "damp", "moist", "soggy", "soaked"]},
-                    {q:"ACTIVE", a:["passive", "idle", "lazy", "inactive", "dormant"]},
-                    {q:"ABOVE", a:["below", "under", "beneath", "underneath", "lower"]},
-                    {q:"GENTLE", a:["rough", "harsh", "violent", "brutal", "fierce"]},
-                    {q:"FRIENDLY", a:["hostile", "cold", "unfriendly", "aloof", "antagonistic"]},
-                    {q:"TIGHT", a:["loose", "slack", "baggy", "limp", "relaxed"]},
-                    {q:"WIN", a:["lose", "fail", "surrender", "yield", "forfeit"]},
-                    {q:"PEACE", a:["war", "conflict", "strife", "chaos", "turmoil"]},
-                    {q:"BEST", a:["worst", "least", "poorest", "lowest", "meanest"]},
-                    {q:"WISE", a:["foolish", "naive", "unwise", "silly", "gullible"]},
-                    {q:"HARD", a:["soft", "squishy", "tender", "flexible", "pliant"]},
-                    {q:"SIMPLE", a:["complex", "intricate", "complicated", "elaborate", "ornate"]},
-                    {q:"OPEN", a:["closed", "shut", "sealed", "blocked", "locked"]},
-                    {q:"NEAR", a:["far", "distant", "remote", "away", "yonder"]},
-                    {q:"EARLY", a:["late", "delayed", "tardy", "belated", "overdue"]},
-                    {q:"GAIN", a:["loss", "reduction", "decline", "decrease", "depletion"]},
-                    {q:"BITTER", a:["sweet", "sugary", "honeyed", "pleasant", "mild"]},
-                    {q:"CAREFUL", a:["careless", "reckless", "negligent", "heedless", "rash"]},
-                    {q:"LAUGH", a:["cry", "weep", "sob", "mourn", "grieve"]},
-                    {q:"TAME", a:["wild", "feral", "untamed", "savage", "fierce"]},
-                    {q:"TRUE", a:["false", "wrong", "untrue", "spurious", "bogus"]},
-                    {q:"MODERN", a:["ancient", "antique", "old-fashioned", "archaic", "traditional"]},
-                    {q:"PUBLIC", a:["private", "secret", "confidential", "personal", "hidden"]},
-                    {q:"EMPTY", a:["full", "occupied", "crowded", "packed", "brimming"]},
-                    {q:"DIRECT", a:["indirect", "roundabout", "meandering", "deviating", "crooked"]},
-                    {q:"GIANT", a:["tiny", "dwarf", "midget", "small", "miniature"]},
-                    {q:"LEAD", a:["follow", "trail", "accompany", "obey", "subordinate"]},
-                    {q:"POLITE", a:["rude", "impolite", "boorish", "discourteous", "insulting"]},
-                    {q:"ACCEPT", a:["reject", "refuse", "decline", "deny", "spurn"]},
-                    {q:"CREATE", a:["destroy", "demolish", "ruin", "dismantle", "annihilate"]},
-                    {q:"FAIR", a:["unfair", "biased", "unjust", "partial", "prejudiced"]},
-                    {q:"HUMBLE", a:["proud", "arrogant", "vain", "haughty", "conceited"]},
-                    {q:"INNER", a:["outer", "exterior", "external", "outward", "surface"]},
-                    {q:"ALWAYS", a:["never", "rarely", "seldom", "occasionally", "infrequently"]},
-                    {q:"BORROW", a:["lend", "return", "provide", "grant", "give"]},
-                    {q:"BUILD", a:["demolish", "raze", "destroy", "break", "wreck"]},
-                    {q:"CERTAIN", a:["uncertain", "doubtful", "unsure", "hesitant", "ambiguous"]},
-                    {q:"CHEERFUL", a:["gloomy", "sad", "grumpy", "morose", "somber"]},
-                    {q:"DELICIOUS", a:["distasteful", "yucky", "repulsive", "bland", "unpalatable"]},
-                    {q:"EQUAL", a:["unequal", "different", "uneven", "disproportionate", "varied"]},
-                    {q:"FAMOUS", a:["unknown", "anonymous", "obscure", "unheard-of", "inglorious"]},
-                    {q:"FERTILE", a:["barren", "sterile", "infertile", "arid", "unproductive"]},
-                    {q:"GENERAL", a:["specific", "particular", "unique", "limited", "special"]},
-                    {q:"HOPE", a:["despair", "doubt", "pessimism", "despondency", "hopelessness"]},
-                    {q:"JOIN", a:["separate", "divide", "detach", "disconnect", "sever"]},
-                    {q:"KNOWLEDGE", a:["ignorance", "illiteracy", "unfamiliarity", "confusion", "inexperience"]},
-                    {q:"LITERAL", a:["figurative", "metaphorical", "symbolic", "abstract", "allegorical"]},
-                    {q:"MAJORITY", a:["minority", "handful", "few", "fraction", "scarcity"]},
-                    {q:"NATURAL", a:["artificial", "man-made", "synthetic", "unnatural", "affected"]},
-                    {q:"NORMAL", a:["abnormal", "weird", "strange", "unusual", "eccentric"]},
-                    {q:"OBEY", a:["disobey", "defy", "rebel", "resist", "transgress"]},
-                    {q:"PATIENCE", a:["impatience", "eagerness", "irritation", "restlessness", "haste"]},
-                    {q:"PERMANENT", a:["temporary", "brief", "fleeting", "transient", "ephemeral"]},
-                    {q:"PLENTY", a:["scarcity", "lack", "dearth", "shortage", "insufficiency"]},
-                    {q:"PRAISE", a:["criticize", "condemn", "scold", "blame", "reprimand"]},
-                    {q:"QUICK", a:["slow", "lethargic", "deliberate", "leisurely", "sluggish"]},
-                    {q:"REAL", a:["fake", "imaginary", "fictional", "artificial", "false"]},
-                    {q:"REMEMBER", a:["forget", "overlook", "neglect", "ignore", "dismiss"]},
-                    {q:"ROUGH", a:["smooth", "silky", "level", "polished", "even"]},
-                    {q:"SOBER", a:["drunk", "intoxicated", "inebriated", "tipsy", "wasted"]},
-                    {q:"SOLID", a:["liquid", "gas", "hollow", "soft", "fragile"]},
-                    {q:"TIDY", a:["messy", "untidy", "cluttered", "chaotic", "sloppy"]},
-                    {q:"UNIQUE", a:["common", "ordinary", "usual", "typical", "standard"]},
-                    {q:"UNITY", a:["division", "discord", "separation", "disunity", "conflict"]},
-                    {q:"VERTICAL", a:["horizontal", "flat", "level", "recumbent", "prone"]}
-                ];
-                
                 this.isPlaying = false;
-                
-                // Using global theme function
-                if (typeof applyGlobalTheme === 'function') {
-                    applyGlobalTheme();
-                } else {
-                    this.applyTheme();
-                }
-
-                this.initMenu();
+                this.solved = 0;
+                this.time = 30;
+                this.active = null;
+                this.timer = null;
                 this.updateUI();
             }
 
-            applyTheme() {
-                const savedSkin = localStorage.getItem('bt_current_skin') || 'red';
-                const skinColors = {
-                    'red': '#ff0000', 'blue': '#0088ff', 'yellow': '#ffcc00', 
-                    'green': '#00ff00', 'cyan': '#00ffff', 'pink': '#ff00ff', 
-                    'purple': '#9900ff', 'orange': '#ff6600', 'gold': '#ffd700'
-                };
-                if(savedSkin === 'rainbow') {
-                    document.documentElement.style.animation = "rainbow-glow 5s infinite linear";
-                } else {
-                    document.documentElement.style.animation = "none";
-                    document.documentElement.style.setProperty('--accent', skinColors[savedSkin] || '#ff0000');
-                }
-            }
-
             updateUI() {
-                document.getElementById('cur-brains').innerText = this.brains;
-                document.getElementById('display-lvl').innerText = selectedLvl;
+                document.getElementById('total-brains').innerText = this.brains;
+                document.getElementById('lvl-display').innerText = selectedLvl;
             }
 
             initMenu() {
-                const grid = document.getElementById('lvl-grid');
-                grid.innerHTML = '';
-                document.getElementById('btn-container').innerHTML = '';
-                document.getElementById('main-start-btn').style.display = 'block';
-                this.unlockedLvl = parseInt(localStorage.getItem('bt_unlocked_grammar')) || 1;
-                for (let i = 1; i <= 100; i++) {
-                    const btn = document.createElement('button');
-                    btn.innerText = i;
-                    btn.className = 'lvl-btn';
-                    if (i <= this.unlockedLvl) {
-                        btn.classList.add('unlocked');
-                        btn.onclick = () => { selectedLvl = i; this.initMenu(); this.updateUI(); };
-                    }
-                    if (i === selectedLvl) btn.classList.add('active');
-                    grid.appendChild(btn);
-                }
+                document.getElementById('btn-container').style.display = 'none';
+                document.getElementById('btn-container').innerHTML = `<h1 id="m-title" style="font-size:3rem;">TRAIN CRASHED!</h1>`;
+                this.solved = 0;
+                this.time = 30;
+                document.getElementById('count').innerText = "0";
+                document.getElementById('time').innerText = "30";
+                this.isPlaying = false;
             }
 
             start() {
+                document.getElementById('start-btn').style.display = 'none';
+                this.initMenu();
                 this.isPlaying = true;
-                this.solved = 0;
-                this.active = null;
-                document.getElementById('overlay').style.display = 'none';
-                document.getElementById('count').innerText = "0";
-                document.getElementById('ans').value = "";
-                document.getElementById('ans').focus();
                 this.spawn();
-                this.loop();
+                this.timer = setInterval(() => {
+                    this.time--;
+                    document.getElementById('time').innerText = this.time;
+                    if(this.time <= 0) this.end(false);
+                }, 1000);
+                document.getElementById('ans').focus();
             }
 
             spawn() {
-                if (!this.isPlaying) return;
-                if (this.solved >= 10) return this.end(true);
-                const word = this.wordBank[Math.floor(Math.random() * this.wordBank.length)];
-                if(this.active) this.active.el.remove();
-                const el = document.createElement('div');
-                el.className = 'train-car';
-                el.innerText = word.q;
-                el.style.top = "150px";
-                el.style.left = "-200px";
-                document.getElementById('game-container').appendChild(el);
-                const speed = 1.5 + (selectedLvl * 0.15);
-                this.active = { el, x: -200, s: speed, ans: word.a };
-            }
-
-            loop() {
                 if(!this.isPlaying) return;
-                if(this.active) {
-                    this.active.x += this.active.s;
-                    this.active.el.style.left = this.active.x + "px";
-                    if(this.active.x > 850) this.end(false);
-                }
-                requestAnimationFrame(() => this.loop());
+                const container = document.getElementById('game-container');
+                const el = document.createElement('div');
+                el.className = 'word-card';
+                
+                let speed = 8;
+                if(selectedLvl > 10) speed = Math.max(2, 8 - ((selectedLvl-10) * 0.5));
+
+                el.style.animation = `fall ${speed}s linear forwards`;
+                el.style.left = Math.random() * (container.clientWidth - 150) + "px";
+
+                const item = sentences[Math.floor(Math.random() * sentences.length)];
+                el.innerText = item.q;
+                container.appendChild(el);
+                this.active = { el, ans: item.a.toLowerCase() };
+
+                el.addEventListener('animationend', () => {
+                    if(this.isPlaying) { el.remove(); this.spawn(); } 
+                });
             }
 
             end(win) {
                 this.isPlaying = false;
+                clearInterval(this.timer);
                 if(this.active) this.active.el.remove();
-                const overlay = document.getElementById('overlay');
-                overlay.style.display = 'flex';
-                document.getElementById('main-start-btn').style.display = 'none';
+                this.active = null;
+
                 const btnContainer = document.getElementById('btn-container');
-                btnContainer.innerHTML = '';
+                btnContainer.style.display = 'flex';
+
                 if(win) {
-                    const reward = selectedLvl * 5;
-                    this.brains += reward;
-                    localStorage.setItem('bt_coins', this.brains);
-                    if (selectedLvl === this.unlockedLvl && this.unlockedLvl < 100) {
-                        this.unlockedLvl++;
-                        localStorage.setItem('bt_unlocked_grammar', this.unlockedLvl);
+                    this.brains += (selectedLvl * 5);
+                    if(selectedLvl === (parseInt(localStorage.getItem('bt_unlocked_grammar'))||1)) {
+                         localStorage.setItem('bt_unlocked_grammar', selectedLvl + 1);
                     }
+                    localStorage.setItem('bt_coins', this.brains);
                     document.getElementById('m-title').innerText = "LEVEL CLEAR!";
+                    
                     const nextBtn = document.createElement('button');
                     nextBtn.className = 'game-btn';
                     nextBtn.innerText = "NEXT LEVEL";
@@ -284,7 +168,6 @@
                     retryBtn.onclick = () => this.start();
                     btnContainer.appendChild(retryBtn);
                 }
-                this.updateUI();
             }
         }
 
@@ -293,13 +176,22 @@
         document.getElementById('ans').addEventListener('input', (e) => {
             if(game.isPlaying && game.active) {
                 const val = e.target.value.toLowerCase().trim();
-                if(game.active.ans.includes(val)) {
+                if(game.active.ans === val) {
                     game.active.el.remove();
                     game.active = null;
                     game.solved++;
+                    
+                    game.time += 2;
+                    document.getElementById('time').innerText = game.time;
+
                     document.getElementById('count').innerText = game.solved;
                     document.getElementById('ans').value = "";
-                    game.spawn();
+                    
+                    if(game.solved >= 10) {
+                        game.end(true);
+                    } else {
+                        game.spawn();
+                    }
                 }
             }
         });
