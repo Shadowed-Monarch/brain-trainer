@@ -6,162 +6,190 @@
     <title>Maths Train</title>
     <script src="theme.js"></script>
     <style>
-        :root { --bg: #000; --accent: #f00; --brain: #ff77ff; }
-
+        @property --accent { syntax: '<color>'; initial-value: #f00; inherits: true; }
+        
+        :root[data-theme="dark"] {
+            --bg: #050505; --text: #fff; --border: #333; --card: #111; --overlay: rgba(0,0,0,0.9);
+        }
+        :root[data-theme="light"] {
+            --bg: #f5f5f5; --text: #000; --border: #ddd; --card: #fff; --overlay: rgba(255,255,255,0.9);
+        }
+        
         @keyframes rainbow-glow { 
             0%{--accent:#f00} 20%{--accent:#ff0} 40%{--accent:#0f0} 
             60%{--accent:#0ff} 80%{--accent:#90f} 100%{--accent:#f00} 
         }
 
-        body { font-family: sans-serif; background: var(--bg); color: #fff; margin: 0; display: flex; flex-direction: column; align-items: center; height: 100vh; overflow: hidden; }
-        header { width: 100%; padding: 10px 20px; display: flex; justify-content: space-between; border-bottom: 2px solid var(--accent); align-items: center; background: #050505; box-sizing: border-box; }
-        .brain-wrap { display: flex; align-items: center; gap: 8px; color: var(--brain); font-weight: bold; }
-        #game-container { position: relative; width: 95%; max-width: 800px; height: 350px; background: #080808; border: 2px solid var(--accent); border-radius: 15px; margin-top: 10px; overflow: hidden; }
-        .bubble { position: absolute; background: var(--accent); width: 100px; height: 55px; border-radius: 50px; font-weight: bold; font-size: 1.2rem; box-shadow: 0 0 15px var(--accent); display: flex; align-items: center; justify-content: center; color: white; transition: transform 0.1s; z-index: 5; }
-        #ans { padding: 15px; width: 80%; max-width: 300px; margin-top: 20px; background: #111; border: 2px solid var(--accent); color: #fff; border-radius: 12px; font-size: 24px; text-align: center; outline: none; }
-        #ans.correct { border-color: #0f0; box-shadow: 0 0 15px #0f0; }
-        #overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.95); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 10; padding: 20px; }
-        .level-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; max-height: 200px; overflow-y: auto; margin: 15px 0; padding: 10px; width: 100%; }
-        .lvl-btn { padding: 10px; border: 2px solid #333; background: #111; color: #666; cursor: not-allowed; border-radius: 8px; font-weight: bold; font-size: 0.9rem; }
-        .lvl-btn.unlocked { border-color: #555; color: #fff; cursor: pointer; }
-        .lvl-btn.active { border-color: var(--accent); background: var(--accent); color: white; }
-        .start-btn { padding: 15px 40px; background: var(--accent); border: none; color: white; border-radius: 30px; font-weight: bold; cursor: pointer; font-size: 1.1rem; }
+        body { font-family: sans-serif; background: var(--bg); color: var(--text); margin: 0; display: flex; flex-direction: column; align-items: center; height: 100vh; overflow: hidden; }
+        header { width: 100%; padding: 10px 20px; display: flex; justify-content: space-between; border-bottom: 2px solid var(--accent); align-items: center; background: var(--bg); box-sizing: border-box; }
+        .brain-wrap { display: flex; align-items: center; gap: 8px; color: #ff77ff; font-weight: bold; }
+        #game-container { position: relative; width: 95%; max-width: 800px; height: 100%; overflow: hidden; display: flex; justify-content: center; }
+        .bubble { 
+            position: absolute; width: 120px; height: 120px; border-radius: 50%; 
+            background: var(--card); border: 4px solid var(--accent); display: flex; align-items: center; 
+            justify-content: center; font-size: 1.8rem; font-weight: bold; 
+            box-shadow: 0 0 20px var(--accent); color: var(--text); 
+            text-shadow: 1px 1px 2px var(--bg);
+            top: -150px; 
+            transition: transform 0.1s;
+        }
+        #input-area { position: fixed; bottom: 20px; width: 100%; display: flex; justify-content: center; gap: 10px; }
+        input { padding: 15px; font-size: 1.5rem; text-align: center; border: 2px solid var(--accent); background: var(--card); color: var(--text); border-radius: 10px; width: 150px; outline: none; }
+        
+        #menu-overlay { position: fixed; inset: 0; background: var(--overlay); z-index: 10; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .game-btn { padding: 15px 40px; font-size: 1.5rem; background: var(--card); border: 2px solid var(--accent); color: var(--text); border-radius: 30px; cursor: pointer; margin-top: 20px; }
+        .game-btn:hover { background: var(--accent); color: white; }
+        .correct { border-color: #0f0 !important; background: rgba(0,255,0,0.1) !important; }
     </style>
 </head>
 <body>
     <header>
-        <a href="index.html" style="color:white; text-decoration:none; border:1px solid #fff; padding:5px 12px; border-radius:5px; font-size: 0.8rem;">HOME</a>
-        <div style="font-weight: bold; color: var(--accent);">LVL <span id="display-lvl">1</span></div>
-        <div class="brain-wrap"><span>🧠</span> <span id="cur-brains">0</span></div>
+        <div class="brain-wrap" onclick="location.href='index.html'" style="cursor:pointer">⬅ MENU</div>
+        <div>LEVEL: <span id="lvl">1</span></div>
+        <div class="brain-wrap">🧠 <span id="count">0</span></div>
     </header>
-    <div id="game-container">
-        <div id="overlay">
-            <h2 id="m-title" style="margin:0 0 10px 0;">SELECT LEVEL</h2>
-            <div class="level-grid" id="lvl-grid"></div>
-            <button class="start-btn" id="main-start-btn" onclick="game.start()">START TRAIN</button>
-        </div>
+
+    <div id="game-container"></div>
+    <div id="input-area"><input type="number" id="ans" placeholder="?" autofocus></div>
+
+    <div id="menu-overlay">
+        <h1 id="m-title" style="font-size: 3rem; color:var(--text); text-shadow:0 0 10px var(--accent);">MATHS TRAIN</h1>
+        <div id="start-btn-container"><button class="game-btn" onclick="game.start()">START GAME</button></div>
     </div>
-    <input type="number" id="ans" placeholder="?" autocomplete="off">
-    <p style="color:#888; margin: 10px 0;">SOLVED: <span id="count" style="color:white">0</span>/10</p>
 
     <script>
-        if (window.CSS && CSS.registerProperty) {
-        CSS.registerProperty({
-            name: '--accent',
-            syntax: '<color>',
-            inherits: true,
-            initialValue: '#ff0000'
-        });
-    }
-        let selectedLvl = 1;
+        let selectedLvl = parseInt(localStorage.getItem('bt_unlocked_math')) || 1;
+
         class MathGame {
             constructor() {
-                this.brains = parseInt(localStorage.getItem('bt_coins')) || 0;
-                this.unlockedLvl = parseInt(localStorage.getItem('bt_unlocked')) || 1;
-                this.isPlaying = false;
+                this.container = document.getElementById('game-container');
                 this.active = null;
-                
-                // Use the global theme instead of writing colors here
-                if (typeof applyGlobalTheme === 'function') applyGlobalTheme();
-                
-                this.initMenu();
-                this.updateUI();
+                this.frame = 0;
+                this.isPlaying = false;
+                this.solved = 0;
+                this.reqLvl = 10;
+                this.speed = 1.0; 
+                this.brains = parseInt(localStorage.getItem('bt_coins')) || 0;
+                this.unlockedLvl = parseInt(localStorage.getItem('bt_unlocked_math')) || 1;
             }
-            updateUI() {
-                document.getElementById('cur-brains').innerText = this.brains;
-                document.getElementById('display-lvl').innerText = selectedLvl;
-            }
+
             initMenu() {
-                const grid = document.getElementById('lvl-grid'); grid.innerHTML = '';
-                document.getElementById('display-lvl').innerText = selectedLvl;
-                for (let i = 1; i <= 100; i++) {
-                    const btn = document.createElement('button'); btn.innerText = i; btn.className = 'lvl-btn';
-                    if (i <= this.unlockedLvl) {
-                        btn.classList.add('unlocked');
-                        btn.onclick = () => { 
-                            selectedLvl = i; 
-                            const overlay = document.getElementById('overlay');
-                            overlay.querySelectorAll('.temp-btn').forEach(b => b.remove());
-                            document.getElementById('main-start-btn').style.display = 'block';
-                            document.getElementById('m-title').innerText = "SELECT LEVEL";
-                            this.initMenu(); 
-                            this.updateUI(); 
-                        };
-                    }
-                    if (i === selectedLvl) btn.classList.add('active');
-                    grid.appendChild(btn);
-                }
+                document.getElementById('m-title').innerText = `LEVEL ${selectedLvl}`;
+                const cont = document.getElementById('start-btn-container');
+                cont.innerHTML = '<button class="game-btn" onclick="game.start()">START</button>';
+                document.getElementById('lvl').innerText = selectedLvl;
             }
-            start() {
-                this.isPlaying = true; this.solved = 0; this.active = null;
-                document.getElementById('overlay').style.display = 'none';
-                document.getElementById('count').innerText = "0";
-                document.getElementById('ans').value = ""; document.getElementById('ans').focus();
-                document.querySelectorAll('.bubble').forEach(b => b.remove());
-                this.spawn(); this.requestLoop();
-            }
+
             spawn() {
                 if (!this.isPlaying) return;
-                if (this.solved >= 10) return this.end(true);
-                let a, b, q, ans;
-                if (selectedLvl < 5) { a = Math.floor(Math.random() * 10) + 1; b = Math.floor(Math.random() * 10) + 1; q = `${a}+${b}`; ans = a + b; }
-                else if (selectedLvl < 15) { if (Math.random() > 0.5) { a = Math.floor(Math.random() * 20) + 5; b = Math.floor(Math.random() * 10) + 1; q = `${a}-${b}`; ans = a - b; } else { a = Math.floor(Math.random() * 15) + 5; b = Math.floor(Math.random() * 15) + 5; q = `${a}+${b}`; ans = a + b; } }
-                else { let mode = Math.random(); if (mode < 0.33) { a = Math.floor(Math.random() * 30) + 10; b = Math.floor(Math.random() * 20) + 5; q = `${a}+${b}`; ans = a + b; } else if (mode < 0.66) { a = Math.floor(Math.random() * 30) + 10; b = Math.floor(Math.random() * 15) + 1; q = `${a}-${b}`; ans = a - b; } else { a = Math.floor(Math.random() * 10) + 2; b = Math.floor(Math.random() * 5) + 2; q = `${a}×${b}`; ans = a * b; } }
-                const el = document.createElement('div'); el.className = 'bubble'; el.innerText = q;
-                el.style.top = (Math.random() * 240 + 30) + "px"; el.style.left = "-110px";
-                document.getElementById('game-container').appendChild(el);
-                const speed = 0.6 + (selectedLvl * 0.05);
-                this.active = { el, x: -110, s: speed, ans: ans.toString() };
+                
+                let n1, n2, op, ans;
+                const operators = ['+'];
+                if(selectedLvl >= 3) operators.push('-');
+                if(selectedLvl >= 6) operators.push('*');
+                if(selectedLvl >= 10) operators.push('/');
+
+                op = operators[Math.floor(Math.random() * operators.length)];
+
+                if(op === '+') { n1=r(20); n2=r(20); ans=n1+n2; }
+                else if(op === '-') { n1=r(20); n2=r(n1); ans=n1-n2; }
+                else if(op === '*') { n1=r(10); n2=r(10); ans=n1*n2; }
+                else if(op === '/') { n2=r(9)+1; ans=r(10); n1=n2*ans; }
+
+                const el = document.createElement('div');
+                el.className = 'bubble';
+                el.innerText = `${n1} ${op} ${n2}`;
+                el.style.left = Math.random() * (this.container.clientWidth - 120) + 'px';
+                this.container.appendChild(el);
+                
+                this.active = { el, ans: ans.toString(), y: -150 };
             }
-            requestLoop() {
-                if(!this.isPlaying) return;
-                if(this.active) {
-                    this.active.x += this.active.s; this.active.el.style.left = this.active.x + "px";
-                    if(this.active.x > document.getElementById('game-container').offsetWidth) return this.end(false);
+
+            loop() {
+                if (!this.isPlaying || !this.active) return;
+                
+                this.active.y += this.speed;
+                this.active.el.style.top = this.active.y + 'px';
+
+                if (this.active.y > this.container.clientHeight - 80) {
+                    this.end(false);
+                } else {
+                    requestAnimationFrame(() => this.loop());
                 }
-                requestAnimationFrame(() => this.requestLoop());
             }
+
+            start() {
+                document.getElementById('menu-overlay').style.display = 'none';
+                document.getElementById('ans').value = '';
+                document.getElementById('ans').focus();
+                this.isPlaying = true;
+                this.solved = 0;
+                this.reqLvl = 5 + (selectedLvl * 2);
+                document.getElementById('count').innerText = 0;
+                
+                this.speed = (selectedLvl < 10) ? 1.5 : 1.5 + ((selectedLvl - 9) * 0.1);
+
+                this.spawn();
+                this.loop();
+            }
+
             end(win) {
-                this.isPlaying = false; if(this.active) this.active.el.remove(); this.active = null;
-                const overlay = document.getElementById('overlay');
+                this.isPlaying = false;
+                if(this.active) { this.active.el.remove(); this.active = null; }
+                const overlay = document.getElementById('menu-overlay');
                 overlay.style.display = 'flex';
-                document.getElementById('main-start-btn').style.display = 'none';
-                overlay.querySelectorAll('.temp-btn').forEach(b => b.remove());
-
+                
                 if(win) {
-                    document.getElementById('m-title').innerText = "LEVEL CLEAR!";
                     this.brains += (selectedLvl * 10);
-                    if (selectedLvl === this.unlockedLvl) { this.unlockedLvl++; localStorage.setItem('bt_unlocked', this.unlockedLvl); }
-                    localStorage.setItem('bt_coins', this.brains); 
-                    this.initMenu(); this.updateUI();
-
+                    if (selectedLvl === this.unlockedLvl) {
+                        this.unlockedLvl++;
+                        localStorage.setItem('bt_unlocked_math', this.unlockedLvl);
+                    }
+                    localStorage.setItem('bt_coins', this.brains);
+                    document.getElementById('m-title').innerText = "PASSED!";
                     const nextBtn = document.createElement('button');
-                    nextBtn.className = 'start-btn temp-btn';
+                    nextBtn.className = 'game-btn';
                     nextBtn.innerText = "NEXT LEVEL";
-                    nextBtn.style.marginTop = "10px";
-                    nextBtn.onclick = () => { selectedLvl++; this.initMenu(); this.updateUI(); this.start(); };
-                    overlay.appendChild(nextBtn);
+                    nextBtn.onclick = () => { selectedLvl++; this.initMenu(); this.start(); };
+                    document.getElementById('start-btn-container').innerHTML = '';
+                    document.getElementById('start-btn-container').appendChild(nextBtn);
                 } else { 
-                    document.getElementById('m-title').innerText = "GAME OVER"; 
+                    document.getElementById('m-title').innerText = "FAILED"; 
                     const retryBtn = document.createElement('button');
-                    retryBtn.className = 'start-btn temp-btn';
-                    retryBtn.innerText = "PLAY AGAIN";
-                    retryBtn.style.marginTop = "10px";
+                    retryBtn.className = 'game-btn';
+                    retryBtn.innerText = "TRY AGAIN";
                     retryBtn.onclick = () => this.start();
-                    overlay.appendChild(retryBtn);
+                    document.getElementById('start-btn-container').innerHTML = '';
+                    document.getElementById('start-btn-container').appendChild(retryBtn);
                 }
             }
         }
+
+        function r(max) { return Math.floor(Math.random() * max); }
         const game = new MathGame();
+        
         document.getElementById('ans').addEventListener('input', (e) => {
             if(game.isPlaying && game.active && e.target.value === game.active.ans) {
-                const bubble = game.active.el; game.active = null; game.solved++;
+                const bubble = game.active.el; 
+                game.active = null; 
+                game.solved++;
                 document.getElementById('count').innerText = game.solved;
                 document.getElementById('ans').classList.add('correct');
-                bubble.style.transform = "scale(0)";
-                setTimeout(() => { bubble.remove(); document.getElementById('ans').classList.remove('correct'); document.getElementById('ans').value = ""; game.spawn(); }, 100);
+                
+                bubble.style.transform = "scale(1.2)";
+                bubble.style.opacity = "0";
+                
+                setTimeout(() => { 
+                    bubble.remove(); 
+                    document.getElementById('ans').classList.remove('correct'); 
+                    document.getElementById('ans').value = ""; 
+                    if(game.solved >= game.reqLvl) game.end(true);
+                    else game.spawn(); 
+                }, 150);
             }
         });
+        
+        game.initMenu();
     </script>
 </body>
 </html>
