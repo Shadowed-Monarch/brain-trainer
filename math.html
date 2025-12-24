@@ -7,189 +7,210 @@
     <script src="theme.js"></script>
     <style>
         @property --accent { syntax: '<color>'; initial-value: #f00; inherits: true; }
+        :root[data-theme="dark"] { --bg: #050505; --text: #fff; --border: #333; --overlay: rgba(0,0,0,0.9); }
+        :root[data-theme="light"] { --bg: #f5f5f5; --text: #000; --border: #ddd; --overlay: rgba(255,255,255,0.9); }
         
-        :root[data-theme="dark"] {
-            --bg: #050505; --text: #fff; --border: #333; --card: #111; --overlay: rgba(0,0,0,0.9);
-        }
-        :root[data-theme="light"] {
-            --bg: #f5f5f5; --text: #000; --border: #ddd; --card: #fff; --overlay: rgba(255,255,255,0.9);
-        }
-        
-        @keyframes rainbow-glow { 
+        @keyframes rainbow-loop { 
             0%{--accent:#f00} 20%{--accent:#ff0} 40%{--accent:#0f0} 
             60%{--accent:#0ff} 80%{--accent:#90f} 100%{--accent:#f00} 
         }
+        .rainbow-active { animation: rainbow-loop 5s infinite linear !important; }
 
         body { font-family: sans-serif; background: var(--bg); color: var(--text); margin: 0; display: flex; flex-direction: column; align-items: center; height: 100vh; overflow: hidden; }
         header { width: 100%; padding: 10px 20px; display: flex; justify-content: space-between; border-bottom: 2px solid var(--accent); align-items: center; background: var(--bg); box-sizing: border-box; }
         .brain-wrap { display: flex; align-items: center; gap: 8px; color: #ff77ff; font-weight: bold; }
-        #game-container { position: relative; width: 95%; max-width: 800px; height: 100%; overflow: hidden; display: flex; justify-content: center; }
-        .bubble { 
-            position: absolute; width: 120px; height: 120px; border-radius: 50%; 
-            background: var(--card); border: 4px solid var(--accent); display: flex; align-items: center; 
-            justify-content: center; font-size: 1.8rem; font-weight: bold; 
-            box-shadow: 0 0 20px var(--accent); color: var(--text); 
-            text-shadow: 1px 1px 2px var(--bg);
-            top: -150px; 
-            transition: transform 0.1s;
-        }
-        #input-area { position: fixed; bottom: 20px; width: 100%; display: flex; justify-content: center; gap: 10px; }
-        input { padding: 15px; font-size: 1.5rem; text-align: center; border: 2px solid var(--accent); background: var(--card); color: var(--text); border-radius: 10px; width: 150px; outline: none; }
+        #game-container { position: relative; width: 95%; max-width: 800px; height: 70vh; margin-top: 20px; overflow: hidden; border: 1px solid var(--border); border-radius: 10px; background: var(--bg); }
         
-        #menu-overlay { position: fixed; inset: 0; background: var(--overlay); z-index: 10; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        .game-btn { padding: 15px 40px; font-size: 1.5rem; background: var(--card); border: 2px solid var(--accent); color: var(--text); border-radius: 30px; cursor: pointer; margin-top: 20px; }
-        .game-btn:hover { background: var(--accent); color: white; }
-        .correct { border-color: #0f0 !important; background: rgba(0,255,0,0.1) !important; }
+        #input-area { width: 95%; max-width: 800px; display: flex; gap: 10px; margin-top: 20px; justify-content: center; }
+        #ans { padding: 15px; font-size: 1.5rem; text-align: center; border: 2px solid var(--accent); border-radius: 10px; width: 200px; outline: none; background: var(--bg); color: var(--text); }
+        #ans.correct { background: var(--accent); color: var(--bg); transition: 0.2s; }
+
+        .bubble { 
+            position: absolute; width: 80px; height: 80px; border-radius: 50%; 
+            border: 2px solid var(--accent); display: flex; align-items: center; 
+            justify-content: center; font-weight: bold; background: var(--bg); color: var(--text);
+            box-shadow: 0 0 10px var(--accent); font-size: 1.2rem;
+            animation-timing-function: linear; 
+        }
+
+        @keyframes fall { from { top: -90px; } to { top: 100%; } }
+
+        .start-btn { padding: 15px 40px; font-size: 1.5rem; background: var(--bg); color: var(--text); border: 2px solid var(--accent); border-radius: 30px; cursor: pointer; margin-top: 50px; }
+        .start-btn:hover { background: var(--accent); color: var(--bg); }
+
+        #stats-bar { display: flex; justify-content: space-around; width: 100%; max-width: 800px; font-size: 1.2rem; margin-top: 10px; }
+        #menu-overlay { position: absolute; inset: 0; background: var(--overlay); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 10; }
+        .temp-btn { margin-top: 20px; font-size: 1.2rem; padding: 10px 30px; }
+
     </style>
 </head>
 <body>
     <header>
-        <div class="brain-wrap" onclick="location.href='index.html'" style="cursor:pointer">⬅ MENU</div>
-        <div>LEVEL: <span id="lvl">1</span></div>
-        <div class="brain-wrap">🧠 <span id="count">0</span></div>
+        <a href="index.html" style="text-decoration:none; color:var(--text); font-weight:bold;">← HOME</a>
+        <div style="font-weight:bold;">LEVEL <span id="lvl-display">1</span></div>
+        <div class="brain-wrap"><span>🧠</span> <span id="total-brains">0</span></div>
     </header>
 
-    <div id="game-container"></div>
-    <div id="input-area"><input type="number" id="ans" placeholder="?" autofocus></div>
-
-    <div id="menu-overlay">
-        <h1 id="m-title" style="font-size: 3rem; color:var(--text); text-shadow:0 0 10px var(--accent);">MATHS TRAIN</h1>
-        <div id="start-btn-container"><button class="game-btn" onclick="game.start()">START GAME</button></div>
+    <div id="stats-bar">
+        <div>Solved: <span id="count">0</span>/10</div>
+        <div>Time: <span id="time">30</span>s</div>
     </div>
+
+    <div id="game-container">
+        <div id="menu-overlay">
+            <h1 id="m-title" style="font-size:3rem; margin:0;">GAME OVER</h1>
+        </div>
+    </div>
+
+    <div id="input-area">
+        <input type="number" id="ans" placeholder="?">
+    </div>
+
+    <button id="main-start-btn" class="start-btn" onclick="game.start()">START GAME</button>
 
     <script>
         let selectedLvl = parseInt(localStorage.getItem('bt_unlocked_math')) || 1;
-
+        
         class MathGame {
             constructor() {
-                this.container = document.getElementById('game-container');
-                this.active = null;
-                this.frame = 0;
+                this.level = selectedLvl;
+                this.brains = parseInt(localStorage.getItem('bt_coins')) || 0;
                 this.isPlaying = false;
                 this.solved = 0;
-                this.reqLvl = 10;
-                this.speed = 1.0; 
-                this.brains = parseInt(localStorage.getItem('bt_coins')) || 0;
-                this.unlockedLvl = parseInt(localStorage.getItem('bt_unlocked_math')) || 1;
+                this.time = 30;
+                this.timerInt = null;
+                this.active = null;
+                this.updateUI();
+            }
+
+            updateUI() {
+                document.getElementById('total-brains').innerText = this.brains;
+                document.getElementById('lvl-display').innerText = selectedLvl;
             }
 
             initMenu() {
-                document.getElementById('m-title').innerText = `LEVEL ${selectedLvl}`;
-                const cont = document.getElementById('start-btn-container');
-                cont.innerHTML = '<button class="game-btn" onclick="game.start()">START</button>';
-                document.getElementById('lvl').innerText = selectedLvl;
-            }
-
-            spawn() {
-                if (!this.isPlaying) return;
-                
-                let n1, n2, op, ans;
-                const operators = ['+'];
-                if(selectedLvl >= 3) operators.push('-');
-                if(selectedLvl >= 6) operators.push('*');
-                if(selectedLvl >= 10) operators.push('/');
-
-                op = operators[Math.floor(Math.random() * operators.length)];
-
-                if(op === '+') { n1=r(20); n2=r(20); ans=n1+n2; }
-                else if(op === '-') { n1=r(20); n2=r(n1); ans=n1-n2; }
-                else if(op === '*') { n1=r(10); n2=r(10); ans=n1*n2; }
-                else if(op === '/') { n2=r(9)+1; ans=r(10); n1=n2*ans; }
-
-                const el = document.createElement('div');
-                el.className = 'bubble';
-                el.innerText = `${n1} ${op} ${n2}`;
-                el.style.left = Math.random() * (this.container.clientWidth - 120) + 'px';
-                this.container.appendChild(el);
-                
-                this.active = { el, ans: ans.toString(), y: -150 };
-            }
-
-            loop() {
-                if (!this.isPlaying || !this.active) return;
-                
-                this.active.y += this.speed;
-                this.active.el.style.top = this.active.y + 'px';
-
-                if (this.active.y > this.container.clientHeight - 80) {
-                    this.end(false);
-                } else {
-                    requestAnimationFrame(() => this.loop());
-                }
+                document.getElementById('menu-overlay').style.display = 'none';
+                document.getElementById('menu-overlay').innerHTML = `<h1 id="m-title" style="font-size:3rem; margin:0;">GAME OVER</h1>`;
+                this.solved = 0;
+                this.time = 30;
+                document.getElementById('count').innerText = "0";
+                document.getElementById('time').innerText = "30";
+                this.isPlaying = false;
             }
 
             start() {
-                document.getElementById('menu-overlay').style.display = 'none';
-                document.getElementById('ans').value = '';
-                document.getElementById('ans').focus();
+                document.getElementById('main-start-btn').style.display = 'none';
+                this.initMenu();
                 this.isPlaying = true;
-                this.solved = 0;
-                this.reqLvl = 5 + (selectedLvl * 2);
-                document.getElementById('count').innerText = 0;
-                
-                this.speed = (selectedLvl < 10) ? 1.5 : 1.5 + ((selectedLvl - 9) * 0.1);
-
                 this.spawn();
-                this.loop();
+                this.timerInt = setInterval(() => {
+                    this.time--;
+                    document.getElementById('time').innerText = this.time;
+                    if(this.time <= 0) this.end(false);
+                }, 1000);
+                document.getElementById('ans').focus();
+            }
+
+            spawn() {
+                if(!this.isPlaying) return;
+                const container = document.getElementById('game-container');
+                const el = document.createElement('div');
+                el.className = 'bubble';
+                
+                let speed = 8; 
+                if(selectedLvl > 10) speed = Math.max(2, 8 - ((selectedLvl-10) * 0.5));
+                
+                el.style.animation = `fall ${speed}s linear forwards`;
+                el.style.left = Math.random() * (container.clientWidth - 80) + "px";
+
+                let q = this.generateQuestion();
+                el.innerText = q.text;
+                container.appendChild(el);
+                this.active = { el, ans: q.ans };
+
+                el.addEventListener('animationend', () => {
+                    if(this.isPlaying) { el.remove(); this.spawn(); } 
+                });
+            }
+
+            generateQuestion() {
+                let ops = ['+'];
+                if(selectedLvl >= 3) ops.push('-');
+                if(selectedLvl >= 6) ops.push('*');
+                if(selectedLvl >= 10) ops.push('/');
+
+                const op = ops[Math.floor(Math.random() * ops.length)];
+                let a, b;
+
+                if(op === '+') { a = r(1,10+(selectedLvl*2)); b = r(1,10+(selectedLvl*2)); return {text:`${a}+${b}`, ans:a+b}; }
+                if(op === '-') { a = r(5,15+(selectedLvl*2)); b = r(1, a); return {text:`${a}-${b}`, ans:a-b}; }
+                if(op === '*') { a = r(2,2+selectedLvl); b = r(2,5); return {text:`${a}×${b}`, ans:a*b}; }
+                if(op === '/') { b = r(2,5); a = b * r(2,5+selectedLvl); return {text:`${a}÷${b}`, ans:a/b}; }
+                
+                function r(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
             }
 
             end(win) {
                 this.isPlaying = false;
-                if(this.active) { this.active.el.remove(); this.active = null; }
+                clearInterval(this.timerInt);
+                if(this.active) this.active.el.remove();
+                this.active = null;
+
                 const overlay = document.getElementById('menu-overlay');
                 overlay.style.display = 'flex';
                 
                 if(win) {
-                    this.brains += (selectedLvl * 10);
-                    if (selectedLvl === this.unlockedLvl) {
-                        this.unlockedLvl++;
-                        localStorage.setItem('bt_unlocked_math', this.unlockedLvl);
+                    this.brains += (selectedLvl * 5);
+                    if(selectedLvl === (parseInt(localStorage.getItem('bt_unlocked_math'))||1)) {
+                         localStorage.setItem('bt_unlocked_math', selectedLvl + 1);
                     }
                     localStorage.setItem('bt_coins', this.brains);
-                    document.getElementById('m-title').innerText = "PASSED!";
+                    document.getElementById('m-title').innerText = "LEVEL CLEAR!";
+                    
                     const nextBtn = document.createElement('button');
-                    nextBtn.className = 'game-btn';
+                    nextBtn.className = 'start-btn temp-btn';
                     nextBtn.innerText = "NEXT LEVEL";
-                    nextBtn.onclick = () => { selectedLvl++; this.initMenu(); this.start(); };
-                    document.getElementById('start-btn-container').innerHTML = '';
-                    document.getElementById('start-btn-container').appendChild(nextBtn);
+                    nextBtn.style.marginTop = "10px";
+                    nextBtn.onclick = () => { selectedLvl++; this.initMenu(); this.updateUI(); this.start(); };
+                    overlay.appendChild(nextBtn);
                 } else { 
-                    document.getElementById('m-title').innerText = "FAILED"; 
+                    document.getElementById('m-title').innerText = "GAME OVER"; 
                     const retryBtn = document.createElement('button');
-                    retryBtn.className = 'game-btn';
-                    retryBtn.innerText = "TRY AGAIN";
+                    retryBtn.className = 'start-btn temp-btn';
+                    retryBtn.innerText = "PLAY AGAIN";
+                    retryBtn.style.marginTop = "10px";
                     retryBtn.onclick = () => this.start();
-                    document.getElementById('start-btn-container').innerHTML = '';
-                    document.getElementById('start-btn-container').appendChild(retryBtn);
+                    overlay.appendChild(retryBtn);
                 }
             }
         }
-
-        function r(max) { return Math.floor(Math.random() * max); }
         const game = new MathGame();
         
         document.getElementById('ans').addEventListener('input', (e) => {
-            if(game.isPlaying && game.active && e.target.value === game.active.ans) {
+            if(game.isPlaying && game.active && parseFloat(e.target.value) === game.active.ans) {
                 const bubble = game.active.el; 
                 game.active = null; 
                 game.solved++;
+                
+                game.time += 2;
+                document.getElementById('time').innerText = game.time;
+
                 document.getElementById('count').innerText = game.solved;
                 document.getElementById('ans').classList.add('correct');
+                bubble.style.transform = "scale(0)";
                 
-                bubble.style.transform = "scale(1.2)";
-                bubble.style.opacity = "0";
-                
-                setTimeout(() => { 
-                    bubble.remove(); 
-                    document.getElementById('ans').classList.remove('correct'); 
-                    document.getElementById('ans').value = ""; 
-                    if(game.solved >= game.reqLvl) game.end(true);
-                    else game.spawn(); 
-                }, 150);
+                if(game.solved >= 10) {
+                     game.end(true);
+                } else {
+                    setTimeout(() => { 
+                        bubble.remove(); 
+                        document.getElementById('ans').classList.remove('correct'); 
+                        document.getElementById('ans').value = ""; 
+                        game.spawn(); 
+                    }, 100);
+                }
             }
         });
-        
-        game.initMenu();
     </script>
 </body>
 </html>
