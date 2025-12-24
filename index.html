@@ -11,23 +11,21 @@
             inherits: true;
         }
 
-        :root[data-theme="dark"] {
-            --bg: #050505;
-            --card: #111;
-            --text: #ffffff;
-            --subtext: #666;
-            --border: #333;
-            --overlay: rgba(0,0,0,0.95);
-        }
+:root[data-theme="dark"] {
+    --bg: #050505;
+    --card: #111;
+    --text: #ffffff;
+    --subtext: #666;
+    --border: #333;
+}
 
-        :root[data-theme="light"] {
-            --bg: #f5f5f5;
-            --card: #ffffff;
-            --text: #000000;
-            --subtext: #555;
-            --border: #ddd;
-            --overlay: rgba(255,255,255,0.95);
-        }
+:root[data-theme="light"] {
+    --bg: #f5f5f5;
+    --card: #ffffff;
+    --text: #000000;
+    --subtext: #555;
+    --border: #ddd;
+}
 
         @keyframes rainbow-loop {
             0% { --accent: #ff0000; }
@@ -42,16 +40,16 @@
             animation: rainbow-loop 5s infinite linear !important;
         }
 
-        body {
-            background: var(--bg);
-            color: var(--text);
-            font-family: 'Segoe UI', sans-serif;
-            margin: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
-        }
+body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', sans-serif;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+}
 
         header {
             width: 100%;
@@ -85,7 +83,7 @@
         
         .dev-credit { 
             font-size: 0.7rem; 
-            color: var(--subtext); 
+            color: #444; 
             margin-top: 10px; 
             letter-spacing: 1px; 
             text-transform: uppercase; 
@@ -119,7 +117,7 @@
         .progress-bar {
             width: 100%;
             height: 10px;
-            background: var(--border);
+            background: #222;
             border-radius: 5px;
             margin-top: 15px;
             overflow: hidden;
@@ -158,19 +156,18 @@
         .game-card:hover {
             border-color: var(--accent);
             transform: translateY(-5px);
-            background: var(--bg);
+            background: var(--card);
         }
 
         .game-card img {
             width: 50px;
             margin-bottom: 10px;
-            filter: drop-shadow(0 0 5px rgba(125,125,125,0.2));
         }
 
         #shop-overlay {
             position: fixed;
             inset: 0;
-            background: var(--overlay);
+            background: rgba(0,0,0,0.95);
             display: none;
             flex-direction: column;
             align-items: center;
@@ -185,21 +182,6 @@
             margin-bottom: 30px;
         }
 
-        .site-logo {
-    height: 40px; /* Adjust height to fit your header */
-    width: auto;
-    display: block;
-    transition: transform 0.3s ease;
-}
-
-.site-logo:hover {
-    transform: scale(1.05);
-}
-
-.logo-container {
-    display: flex;
-    align-items: center;
-}
         .shop-item {
             width: 60px;
             height: 60px;
@@ -213,39 +195,41 @@
         }
 
         .shop-item:hover { transform: scale(1.1); }
-        .shop-item.selected { border-color: var(--text); box-shadow: 0 0 15px var(--text); }
+        .shop-item.selected { border-color: white; box-shadow: 0 0 15px white; }
 
         #dev-console {
             position: fixed;
             bottom: 0;
             width: 100%;
-            background: var(--card);
+            background: #111;
             padding: 20px;
             display: none;
             justify-content: center;
             border-top: 2px solid var(--accent);
             z-index: 2000;
         }
+
+        .site-logo {
+            height: 40px;
+            width: auto;
+            margin-right: 10px;
+        }
     </style>
 </head>
 <body>
 
     <header>
-        <div class="logo-container">
-    <a href="index.html">
-        <img src="logo.png" alt="Brain Train Logo" class="site-logo">
-    </a>
-</div>
-        <div style="font-size: 1.5rem; font-weight: bold; letter-spacing: 1px;">
+        <div style="display: flex; align-items: center; font-size: 1.5rem; font-weight: bold; letter-spacing: 1px;">
+            <img src="logo.png" alt="" class="site-logo">
             Brain<span style="color:var(--accent)">Train</span> Game
         </div>
         <div style="display: flex; gap: 15px; align-items: center;">
-            <button onclick="toggleLightDark()" id="td-toggle" style="background:none; border:1px solid var(--border); color:var(--text); cursor:pointer; padding:5px 10px; border-radius:15px;">🌓</button>
-            <div class="brain-display" id="brain-clicker">
-                <span>🧠</span>
-                <span id="brains">0</span>
-            </div>
+        <button onclick="toggleLightDark()" id="td-toggle" style="background:none; border:1px solid var(--border); color:var(--text); cursor:pointer; padding:5px 10px; border-radius:15px;">🌓</button>
+        <div class="brain-display" id="brain-clicker">
+            <span>🧠</span>
+            <span id="brains">0</span>
         </div>
+             </div>
     </header>
 
     <div class="hero">
@@ -260,7 +244,7 @@
             <span id="rank-name" style="font-weight:bold; font-size:1.2rem; color:var(--accent)">STUDENT</span>
         </div>
         <div class="progress-bar"><div id="rank-progress"></div></div>
-        <div id="next-rank-info" style="color:var(--subtext); font-size:0.8rem; margin-top:10px;"></div>
+        <div id="next-rank-info" style="color:#666; font-size:0.8rem; margin-top:10px;"></div>
     </div>
 
     <div class="game-grid">
@@ -278,16 +262,16 @@
         </a>
     </div>
 
-    <button onclick="toggleShop()" style="margin-top:40px; padding:12px 30px; font-weight:bold; background:var(--card); color:var(--text); border:2px solid var(--accent); border-radius:25px; cursor:pointer;">
+    <button onclick="toggleShop()" style="margin-top:40px; padding:12px 30px; font-weight:bold; background:#111; color:white; border:2px solid var(--accent); border-radius:25px; cursor:pointer;">
         🎨 OPEN SKIN SHOP
     </button>
     
-    <a href="about.html" style="color:var(--subtext); text-decoration:none; font-size:0.8rem; margin:20px 0 40px 0;">ABOUT BRAIN TRAIN</a>
+    <a href="about.html" style="color:#444; text-decoration:none; font-size:0.8rem; margin:20px 0 40px 0;">ABOUT BRAIN TRAIN</a>
 
     <div id="shop-overlay">
-        <h2 style="color:var(--text); margin-bottom:30px;">CHOOSE SKIN</h2>
+        <h2 style="color:white; margin-bottom:30px;">CHOOSE SKIN</h2>
         <div class="shop-grid" id="shop-grid"></div>
-        <button onclick="toggleShop()" style="padding:10px 20px; cursor:pointer; background:var(--text); color:var(--bg); border:none; border-radius:5px;">CLOSE</button>
+        <button onclick="toggleShop()" style="padding:10px 20px; cursor:pointer; background:white; border:none; border-radius:5px;">CLOSE</button>
     </div>
 
     <div id="dev-console">
@@ -323,7 +307,6 @@
         function updateUI() {
             const savedMode = localStorage.getItem('bt_mode') || 'dark';
             document.documentElement.setAttribute('data-theme', savedMode);
-            
             userBrains = parseInt(localStorage.getItem('bt_coins')) || 0;
             currentSkin = localStorage.getItem('bt_current_skin') || 'red';
 
@@ -365,13 +348,12 @@
                 overlay.style.display = 'flex';
             }
         }
-
         function toggleLightDark() {
-            const currentMode = localStorage.getItem('bt_mode') || 'dark';
-            const newMode = currentMode === 'dark' ? 'light' : 'dark';
-            localStorage.setItem('bt_mode', newMode);
-            updateUI();
-        }
+    const currentMode = localStorage.getItem('bt_mode') || 'dark';
+    const newMode = currentMode === 'dark' ? 'light' : 'dark';
+    localStorage.setItem('bt_mode', newMode);
+    updateUI();
+}
 
         function renderShop() {
             const grid = document.getElementById('shop-grid');
