@@ -102,36 +102,64 @@
                 }, 100);
             }
 
-            spawnDots(count) {
-                const container = document.getElementById('game-container');
-                const w = container.clientWidth - 50;
-                const h = container.clientHeight - 50;
+spawnDots(count) {
+    const container = document.getElementById('game-container');
+    const dotsList = [];
+    const minDistance = 70; 
 
-                for(let i=1; i<=count; i++) {
-                    const dot = document.createElement('div');
-                    dot.className = 'dot';
-                    dot.innerText = i;
-                    dot.style.left = Math.random() * w + "px";
-                    dot.style.top = Math.random() * h + "px";
-                    
-                    let fadeSpeed = Math.max(0.5, 3 - (selectedLvl * 0.1));
-                    dot.style.transition = `opacity ${fadeSpeed}s`;
+    for(let i=1; i<=count; i++) {
+        const dot = document.createElement('div');
+        dot.className = 'dot';
+        dot.innerText = i;
 
-                    dot.onclick = () => {
-                        if(parseInt(dot.innerText) === this.nextNum) {
-                            dot.remove();
-                            this.nextNum++;
-                            
-                            this.timeLeft = Math.min(this.timeLeft + 500, this.maxTime); 
+        let x, y, tooClose;
+        let attempts = 0;
 
-                            if(this.nextNum > count) this.end(true);
-                        } else {
-                            this.end(false);
-                        }
-                    };
-                    container.appendChild(dot);
+
+        do {
+            tooClose = false;
+            x = Math.random() * (container.clientWidth - 50);
+            y = Math.random() * (container.clientHeight - 50);
+            attempts++;
+
+            for (let other of dotsList) {
+                const dx = x - other.x;
+                const dy = y - other.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+
+                if (distance < minDistance) {
+                    tooClose = true;
+                    break;
                 }
             }
+            if (attempts > 50) break; 
+        } while (tooClose);
+
+
+        dotsList.push({ x, y });
+
+        dot.style.left = x + "px";
+        dot.style.top = y + "px";
+        
+        let fadeSpeed = Math.max(0.5, 3 - (selectedLvl * 0.1));
+        dot.style.transition = `opacity ${fadeSpeed}s`;
+
+        dot.onclick = () => {
+            if(parseInt(dot.innerText) === this.nextNum) {
+                dot.remove();
+                this.nextNum++;
+                
+                // Keep your time bonus logic
+                this.timeLeft = Math.min(this.timeLeft + 500, this.maxTime); 
+
+                if(this.nextNum > count) this.end(true);
+            } else {
+                this.end(false);
+            }
+        };
+        container.appendChild(dot);
+    }
+}
 
             end(win) {
                 clearInterval(this.timerInt);
