@@ -52,12 +52,12 @@
 
     <div id="game-container">
         <div id="btn-container">
-            <h1 id="m-title" style="font-size:3rem;">TRAIN CRASHED!</h1>
+            <h1 id="m-title" style="font-size:3rem;">TIME OVER ! TOO LATE, U CAN'T DO THIS LEVEL 💀</h1>
         </div>
     </div>
 
     <div id="input-area">
-        <input type="text" id="ans" placeholder="Type the missing word..." autocomplete="off">
+        <input type="text" id="ans" placeholder="Type the OPPSITE WORD" autocomplete="off">
     </div>
 
     <button id="start-btn" class="game-btn" onclick="game.start()">START GAME</button>
@@ -66,14 +66,56 @@
         let selectedLvl = parseInt(localStorage.getItem('bt_unlocked_grammar')) || 1;
         
         const sentences = [
-            {q: "She ___ to the store.", a: "went"}, {q: "They ___ playing soccer.", a: "are"},
-            {q: "I ___ a book.", a: "have"}, {q: "He ___ faster than me.", a: "runs"},
-            {q: "The sun ___ bright.", a: "is"}, {q: "We ___ happy.", a: "are"},
-            {q: "Dog ___ loudly.", a: "barks"}, {q: "Cats ___ milk.", a: "drink"},
-            {q: "Birds ___ in sky.", a: "fly"}, {q: "Fish ___ in water.", a: "swim"},
-            {q: "I ___ happy.", a: "am"}, {q: "You ___ nice.", a: "are"},
-            {q: "It ___ cold.", a: "is"}, {q: "We ___ won.", a: "have"},
-            {q: "They ___ late.", a: "were"}
+{q:"UP", a:["down", "below", "under", "bottom", "lower"]},
+    {q:"IN", a:["out", "outside", "away", "exterior", "off"]},
+    {q:"ON", a:["off", "under", "below", "beneath", "away"]},
+    {q:"BOY", a:["girl", "woman", "lady", "female", "sister"]},
+    {q:"DAY", a:["night", "dark", "evening", "dusk", "sunset"]},
+    {q:"SUN", a:["moon", "stars", "rain", "clouds", "darkness"]},
+    {q:"YES", a:["no", "never", "not", "negative", "nay"]},
+    {q:"GO", a:["stop", "stay", "wait", "halt", "pause"]},
+    {q:"LEFT", a:["right", "straight", "middle", "center", "back"]},
+    {q:"HELLO", a:["goodbye", "bye", "farewell", "see-ya", "later"]},
+    {q:"COW", a:["bull", "calf", "steer", "ox", "heifer"]},
+    {q:"BIG", a:["small", "tiny", "little", "puny", "mini"]},
+    {q:"HOT", a:["cold", "cool", "chilly", "freezing", "icy"]},
+    {q:"HAPPY", a:["sad", "mad", "angry", "grumpy", "upset"]},
+    {q:"FAST", a:["slow", "poky", "crawling", "lagging", "steady"]},
+    {q:"WET", a:["dry", "parched", "baked", "crispy", "dusty"]},
+    {q:"CLEAN", a:["dirty", "messy", "sticky", "yucky", "muddy"]},
+    {q:"SOFT", a:["hard", "tough", "rough", "firm", "stiff"]},
+    {q:"LOUD", a:["quiet", "soft", "silent", "shh", "calm"]},
+    {q:"NEW", a:["old", "used", "broken", "worn", "ancient"]},
+    {q:"TALL", a:["short", "small", "tiny", "low", "little"]},
+    {q:"FAT", a:["thin", "skinny", "slim", "slender", "lean"]},
+    {q:"OPEN", a:["closed", "shut", "locked", "sealed", "blocked"]},
+    {q:"FULL", a:["empty", "gone", "void", "hollow", "leveled"]},
+    {q:"SWEET", a:["sour", "bitter", "salty", "yucky", "tart"]},
+    {q:"EASY", a:["hard", "tough", "tricky", "difficult", "rough"]},
+    {q:"GOOD", a:["bad", "evil", "mean", "naughty", "wrong"]},
+    {q:"BLACK", a:["white", "bright", "clear", "light", "pale"]},
+    {q:"HEAVY", a:["light", "airy", "fluffy", "weightless", "thin"]},
+    {q:"RICH", a:["poor", "needy", "broke", "penniless", "cheap"]},
+    {q:"SMILE", a:["frown", "cry", "pout", "scowl", "glare"]},
+    {q:"THICK", a:["thin", "slim", "flat", "narrow", "fine"]},
+    {q:"TRUE", a:["false", "wrong", "fake", "lie", "untrue"]},
+    {q:"MANY", a:["few", "some", "one", "none", "little"]},
+    {q:"WIN", a:["lose", "fail", "quit", "drop", "forfeit"]},
+    {q:"PULL", a:["push", "shove", "press", "throw", "toss"]},
+    {q:"GIVE", a:["take", "keep", "grab", "hold", "get"]},
+    {q:"LAUGH", a:["cry", "sob", "frown", "moan", "whine"]},
+    {q:"STAND", a:["sit", "lie", "kneel", "crouch", "fall"]},
+    {q:"TOP", a:["bottom", "base", "floor", "foot", "low"]},
+    {q:"FRONT", a:["back", "rear", "behind", "end", "tail"]},
+    {q:"OVER", a:["under", "below", "beneath", "down", "bottom"]},
+    {q:"EARLY", a:["late", "tardy", "delayed", "slow", "behind"]},
+    {q:"SMOOTH", a:["rough", "bumpy", "scratchy", "fuzzy", "sharp"]},
+    {q:"KIND", a:["mean", "cruel", "rude", "nasty", "hateful"]},
+    {q:"BRAVE", a:["scared", "afraid", "shy", "fearful", "coward"]},
+    {q:"WAKE", a:["sleep", "nap", "dream", "doze", "rest"]},
+    {q:"DARK", a:["light", "bright", "sunny", "clear", "shiny"]},
+    {q:"ALIVE", a:["dead", "gone", "lifeless", "extinct", "asleep"]},
+    {q:"LOVE", a:["hate", "dislike", "mean", "angry", "ignore"]}
         ];
 
         class GrammarGame {
@@ -95,7 +137,7 @@
 
             initMenu() {
                 document.getElementById('btn-container').style.display = 'none';
-                document.getElementById('btn-container').innerHTML = `<h1 id="m-title" style="font-size:3rem;">TRAIN CRASHED!</h1>`;
+                document.getElementById('btn-container').innerHTML = `<h1 id="m-title" style="font-size:3rem;">TIME OVER ! TOO LATE, U CAN'T DO THIS LEVEL 💀</h1>`;
                 this.solved = 0;
                 this.time = 30;
                 document.getElementById('count').innerText = "0";
@@ -161,7 +203,7 @@
                     nextBtn.onclick = () => { selectedLvl++; this.initMenu(); this.updateUI(); this.start(); };
                     btnContainer.appendChild(nextBtn);
                 } else {
-                    document.getElementById('m-title').innerText = "TRAIN CRASHED!";
+                    document.getElementById('m-title').innerText = "TIME OVER ! TOO LATE, U CAN'T DO THIS LEVEL 💀";
                     const retryBtn = document.createElement('button');
                     retryBtn.className = 'game-btn';
                     retryBtn.innerText = "PLAY AGAIN";
