@@ -65,58 +65,57 @@
     <script>
         let selectedLvl = parseInt(localStorage.getItem('bt_unlocked_grammar')) || 1;
         
-        // Word Bank for Opposites
         const opposites = [
-{q:"UP", a:["down", "below", "under", "bottom", "lower"]},
-    {q:"IN", a:["out", "outside", "away", "exterior", "off"]},
-    {q:"ON", a:["off", "under", "below", "beneath", "away"]},
-    {q:"BOY", a:["girl", "woman", "lady", "female", "sister"]},
-    {q:"DAY", a:["night", "dark", "evening", "dusk", "sunset"]},
-    {q:"SUN", a:["moon", "stars", "rain", "clouds", "darkness"]},
-    {q:"YES", a:["no", "never", "not", "negative", "nay"]},
-    {q:"GO", a:["stop", "stay", "wait", "halt", "pause"]},
-    {q:"LEFT", a:["right", "straight", "middle", "center", "back"]},
-    {q:"HELLO", a:["goodbye", "bye", "farewell", "see-ya", "later"]},
-    {q:"COW", a:["bull", "calf", "steer", "ox", "heifer"]},
-    {q:"BIG", a:["small", "tiny", "little", "puny", "mini"]},
-    {q:"HOT", a:["cold", "cool", "chilly", "freezing", "icy"]},
-    {q:"HAPPY", a:["sad", "mad", "angry", "grumpy", "upset"]},
-    {q:"FAST", a:["slow", "poky", "crawling", "lagging", "steady"]},
-    {q:"WET", a:["dry", "parched", "baked", "crispy", "dusty"]},
-    {q:"CLEAN", a:["dirty", "messy", "sticky", "yucky", "muddy"]},
-    {q:"SOFT", a:["hard", "tough", "rough", "firm", "stiff"]},
-    {q:"LOUD", a:["quiet", "soft", "silent", "shh", "calm"]},
-    {q:"NEW", a:["old", "used", "broken", "worn", "ancient"]},
-    {q:"TALL", a:["short", "small", "tiny", "low", "little"]},
-    {q:"FAT", a:["thin", "skinny", "slim", "slender", "lean"]},
-    {q:"OPEN", a:["closed", "shut", "locked", "sealed", "blocked"]},
-    {q:"FULL", a:["empty", "gone", "void", "hollow", "leveled"]},
-    {q:"SWEET", a:["sour", "bitter", "salty", "yucky", "tart"]},
-    {q:"EASY", a:["hard", "tough", "tricky", "difficult", "rough"]},
-    {q:"GOOD", a:["bad", "evil", "mean", "naughty", "wrong"]},
-    {q:"BLACK", a:["white", "bright", "clear", "light", "pale"]},
-    {q:"HEAVY", a:["light", "airy", "fluffy", "weightless", "thin"]},
-    {q:"RICH", a:["poor", "needy", "broke", "penniless", "cheap"]},
-    {q:"SMILE", a:["frown", "cry", "pout", "scowl", "glare"]},
-    {q:"THICK", a:["thin", "slim", "flat", "narrow", "fine"]},
-    {q:"TRUE", a:["false", "wrong", "fake", "lie", "untrue"]},
-    {q:"MANY", a:["few", "some", "one", "none", "little"]},
-    {q:"WIN", a:["lose", "fail", "quit", "drop", "forfeit"]},
-    {q:"PULL", a:["push", "shove", "press", "throw", "toss"]},
-    {q:"GIVE", a:["take", "keep", "grab", "hold", "get"]},
-    {q:"LAUGH", a:["cry", "sob", "frown", "moan", "whine"]},
-    {q:"STAND", a:["sit", "lie", "kneel", "crouch", "fall"]},
-    {q:"TOP", a:["bottom", "base", "floor", "foot", "low"]},
-    {q:"FRONT", a:["back", "rear", "behind", "end", "tail"]},
-    {q:"OVER", a:["under", "below", "beneath", "down", "bottom"]},
-    {q:"EARLY", a:["late", "tardy", "delayed", "slow", "behind"]},
-    {q:"SMOOTH", a:["rough", "bumpy", "scratchy", "fuzzy", "sharp"]},
-    {q:"KIND", a:["mean", "cruel", "rude", "nasty", "hateful"]},
-    {q:"BRAVE", a:["scared", "afraid", "shy", "fearful", "coward"]},
-    {q:"WAKE", a:["sleep", "nap", "dream", "doze", "rest"]},
-    {q:"DARK", a:["light", "bright", "sunny", "clear", "shiny"]},
-    {q:"ALIVE", a:["dead", "gone", "lifeless", "extinct", "asleep"]},
-    {q:"LOVE", a:["hate", "dislike", "mean", "angry", "ignore"]}
+            {q:"UP", a:["down", "below", "under", "bottom", "lower"]},
+            {q:"IN", a:["out", "outside", "away", "exterior", "off"]},
+            {q:"ON", a:["off", "under", "below", "beneath", "away"]},
+            {q:"BOY", a:["girl", "woman", "lady", "female", "sister"]},
+            {q:"DAY", a:["night", "dark", "evening", "dusk", "sunset"]},
+            {q:"SUN", a:["moon", "stars", "rain", "clouds", "darkness"]},
+            {q:"YES", a:["no", "never", "not", "negative", "nay"]},
+            {q:"GO", a:["stop", "stay", "wait", "halt", "pause"]},
+            {q:"LEFT", a:["right", "straight", "middle", "center", "back"]},
+            {q:"HELLO", a:["goodbye", "bye", "farewell", "see-ya", "later"]},
+            {q:"COW", a:["bull", "calf", "steer", "ox", "heifer"]},
+            {q:"BIG", a:["small", "tiny", "little", "puny", "mini"]},
+            {q:"HOT", a:["cold", "cool", "chilly", "freezing", "icy"]},
+            {q:"HAPPY", a:["sad", "mad", "angry", "grumpy", "upset"]},
+            {q:"FAST", a:["slow", "poky", "crawling", "lagging", "steady"]},
+            {q:"WET", a:["dry", "parched", "baked", "crispy", "dusty"]},
+            {q:"CLEAN", a:["dirty", "messy", "sticky", "yucky", "muddy"]},
+            {q:"SOFT", a:["hard", "tough", "rough", "firm", "stiff"]},
+            {q:"LOUD", a:["quiet", "soft", "silent", "shh", "calm"]},
+            {q:"NEW", a:["old", "used", "broken", "worn", "ancient"]},
+            {q:"TALL", a:["short", "small", "tiny", "low", "little"]},
+            {q:"FAT", a:["thin", "skinny", "slim", "slender", "lean"]},
+            {q:"OPEN", a:["closed", "shut", "locked", "sealed", "blocked"]},
+            {q:"FULL", a:["empty", "gone", "void", "hollow", "leveled"]},
+            {q:"SWEET", a:["sour", "bitter", "salty", "yucky", "tart"]},
+            {q:"EASY", a:["hard", "tough", "tricky", "difficult", "rough"]},
+            {q:"GOOD", a:["bad", "evil", "mean", "naughty", "wrong"]},
+            {q:"BLACK", a:["white", "bright", "clear", "light", "pale"]},
+            {q:"HEAVY", a:["light", "airy", "fluffy", "weightless", "thin"]},
+            {q:"RICH", a:["poor", "needy", "broke", "penniless", "cheap"]},
+            {q:"SMILE", a:["frown", "cry", "pout", "scowl", "glare"]},
+            {q:"THICK", a:["thin", "slim", "flat", "narrow", "fine"]},
+            {q:"TRUE", a:["false", "wrong", "fake", "lie", "untrue"]},
+            {q:"MANY", a:["few", "some", "one", "none", "little"]},
+            {q:"WIN", a:["lose", "fail", "quit", "drop", "forfeit"]},
+            {q:"PULL", a:["push", "shove", "press", "throw", "toss"]},
+            {q:"GIVE", a:["take", "keep", "grab", "hold", "get"]},
+            {q:"LAUGH", a:["cry", "sob", "frown", "moan", "whine"]},
+            {q:"STAND", a:["sit", "lie", "kneel", "crouch", "fall"]},
+            {q:"TOP", a:["bottom", "base", "floor", "foot", "low"]},
+            {q:"FRONT", a:["back", "rear", "behind", "end", "tail"]},
+            {q:"OVER", a:["under", "below", "beneath", "down", "bottom"]},
+            {q:"EARLY", a:["late", "tardy", "delayed", "slow", "behind"]},
+            {q:"SMOOTH", a:["rough", "bumpy", "scratchy", "fuzzy", "sharp"]},
+            {q:"KIND", a:["mean", "cruel", "rude", "nasty", "hateful"]},
+            {q:"BRAVE", a:["scared", "afraid", "shy", "fearful", "coward"]},
+            {q:"WAKE", a:["sleep", "nap", "dream", "doze", "rest"]},
+            {q:"DARK", a:["light", "bright", "sunny", "clear", "shiny"]},
+            {q:"ALIVE", a:["dead", "gone", "lifeless", "extinct", "asleep"]},
+            {q:"LOVE", a:["hate", "dislike", "mean", "angry", "ignore"]}
         ];
 
         class OppositeGame {
@@ -174,7 +173,9 @@
                 const pair = opposites[Math.floor(Math.random() * opposites.length)];
                 el.innerHTML = `<small style="font-size:0.8rem; opacity:0.7;">OPPOSITE OF</small><br>${pair.q}`;
                 container.appendChild(el);
-                this.active = { el, ans: pair.a.toLowerCase() };
+                
+                // Store answers as lowercase for comparison
+                this.active = { el, ans: pair.a.map(word => word.toLowerCase()) };
 
                 el.addEventListener('animationend', () => {
                     if(this.isPlaying) { el.remove(); this.spawn(); } 
@@ -219,12 +220,14 @@
         document.getElementById('ans').addEventListener('input', (e) => {
             if(game.isPlaying && game.active) {
                 const val = e.target.value.toLowerCase().trim();
-                if(game.active.ans === val) {
+                
+                // FIXED LOGIC: Check if the typed word is inside the array of answers
+                if(game.active.ans.includes(val)) {
                     game.active.el.remove();
                     game.active = null;
                     game.solved++;
                     
-                    game.time += 2; // Time bonus for correct answer
+                    game.time += 2;
                     document.getElementById('time').innerText = game.time;
 
                     document.getElementById('count').innerText = game.solved;
