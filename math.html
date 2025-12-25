@@ -39,7 +39,7 @@
         .start-btn:hover { background: var(--accent); color: var(--bg); }
 
         #stats-bar { display: flex; justify-content: space-around; width: 100%; max-width: 800px; font-size: 1.2rem; margin-top: 10px; }
-        #menu-overlay { position: absolute; inset: 0; background: var(--overlay); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 10; }
+        #menu-overlay { position: absolute; inset: 0; background: var(--overlay); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 10; text-align: center; padding: 20px; }
         .temp-btn { margin-top: 20px; font-size: 1.2rem; padding: 10px 30px; }
 
     </style>
@@ -58,7 +58,7 @@
 
     <div id="game-container">
         <div id="menu-overlay">
-            <h1 id="m-title" style="font-size:3rem; margin:0;">TIME OVER ! TOO LATE, U CAN'T DO THIS LEVEL 💀</h1>
+            <h1 id="m-title" style="font-size:2.5rem; margin:0;">TIME OVER ! TOO LATE, U CAN'T DO THIS LEVEL 💀</h1>
         </div>
     </div>
 
@@ -90,7 +90,7 @@
 
             initMenu() {
                 document.getElementById('menu-overlay').style.display = 'none';
-                document.getElementById('menu-overlay').innerHTML = `<h1 id="m-title" style="font-size:3rem; margin:0;">GAME OVER</h1>`;
+                document.getElementById('menu-overlay').innerHTML = `<h1 id="m-title" style="font-size:2.5rem; margin:0;">TIME OVER ! TOO LATE, U CAN'T DO THIS LEVEL 💀</h1>`;
                 this.solved = 0;
                 this.time = 30;
                 document.getElementById('count').innerText = "0";
